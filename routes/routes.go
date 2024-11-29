@@ -27,6 +27,12 @@ func SetupRoutes(router *gin.Engine) {
 			categories.PUT("/:id", controllers.UpdateCategory)
 			categories.DELETE("/:id", controllers.DeleteCategory)
 		}
+
+		subcategories := v1.Group("/subcategories")
+		{
+			subcategories.GET("/:id", controllers.GetSubCategoriesByCategoryID)
+			subcategories.POST("/", controllers.CreateSubCategory)
+		}
 	}
 
 	router.GET("/health", func(c *gin.Context) {

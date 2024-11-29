@@ -9,6 +9,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/moonrill/rumahpc-api/config"
 	"github.com/moonrill/rumahpc-api/routes"
+	"github.com/moonrill/rumahpc-api/seeders"
 )
 
 func main() {
@@ -25,6 +26,9 @@ func main() {
 
 	// Load routes
 	routes.SetupRoutes(router)
+
+	// Load seeders
+	seeders.RunSeeders()
 
 	// Get Port
 	port := os.Getenv("PORT")
