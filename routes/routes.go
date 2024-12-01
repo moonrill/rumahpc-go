@@ -10,14 +10,13 @@ func SetupRoutes(router *gin.Engine) {
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
 
-	// Route group for the API
 	v1 := router.Group("/api/v1")
 	{
-		// Authentication routes
-		// auth := v1.Group("/auth")
-		// {
-
-		// }
+		auth := v1.Group("/auth")
+		{
+			auth.POST("/register", controllers.SignUp)
+			auth.POST("/login", controllers.SignIn)
+		}
 
 		categories := v1.Group("/categories")
 		{
