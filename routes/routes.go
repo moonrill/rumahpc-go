@@ -3,6 +3,7 @@ package routes
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/moonrill/rumahpc-api/internal/controllers"
+	"github.com/moonrill/rumahpc-api/middleware"
 )
 
 func SetupRoutes(router *gin.Engine) {
@@ -12,6 +13,7 @@ func SetupRoutes(router *gin.Engine) {
 
 	v1 := router.Group("/api/v1")
 	{
+
 		auth := v1.Group("/auth")
 		{
 			auth.POST("/register", controllers.SignUp)
@@ -22,15 +24,26 @@ func SetupRoutes(router *gin.Engine) {
 		{
 			categories.GET("/", controllers.GetCategories)
 			categories.GET("/:id", controllers.GetCategoryByID)
-			categories.POST("/", controllers.CreateCategory)
-			categories.PUT("/:id", controllers.UpdateCategory)
-			categories.DELETE("/:id", controllers.DeleteCategory)
 		}
 
 		subcategories := v1.Group("/subcategories")
 		{
 			subcategories.GET("/:id", controllers.GetSubCategoriesByCategoryID)
-			subcategories.POST("/", controllers.CreateSubCategory)
+		}
+
+		// Protected routes
+		protected := v1.Group("/")
+		// TODO: choose the auth middleware
+		// protected.Use(middleware.CookiesAuthMiddleware)
+		protected.Use(middleware.HeaderAuthMiddleware)
+		{
+			protected.GET("/profile", controllers.GetProfile)
+			protected.POST("/categories", controllers.CreateCategory)
+			protected.PUT("/categories/:id", controllers.UpdateCategory)
+			protected.DELETE("/categories/:id", controllers.DeleteCategory)
+
+			// Protected subcategory routes
+			protected.POST("/subcategories", controllers.CreateSubCategory)
 		}
 	}
 

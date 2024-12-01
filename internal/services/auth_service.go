@@ -26,7 +26,7 @@ func HashPassword(password string) (string, string, error) {
 }
 
 func GenerateToken(user *models.User) (string, error) {
-	signingKey := []byte(os.Getenv("JWT_SECRET_KEY"))
+	jwtSecretKey := []byte(os.Getenv("JWT_SECRET_KEY"))
 
 	var avatar string
 	if user.Avatar != nil {
@@ -47,7 +47,7 @@ func GenerateToken(user *models.User) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString(signingKey)
+	tokenString, err := token.SignedString(jwtSecretKey)
 
 	if err != nil {
 		return "", err

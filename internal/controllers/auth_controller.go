@@ -79,7 +79,13 @@ func SignIn(c *gin.Context) {
 
 	// Set the token as a cookie in the response
 	c.SetSameSite(http.SameSiteLaxMode)
-	c.SetCookie("access_token", token, 3600*24*7, "", "", false, true)
+	c.SetCookie("Authorization", token, 3600*24*7, "", "", false, true)
 
 	utils.SuccessResponse(c, http.StatusOK, "Success login", gin.H{"access_token": token})
+}
+
+func GetProfile(c *gin.Context) {
+	user := c.MustGet("user").(models.User)
+
+	utils.SuccessResponse(c, http.StatusOK, "Success get profile", user)
 }
