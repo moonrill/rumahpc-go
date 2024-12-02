@@ -35,7 +35,7 @@ func CookiesAuthMiddleware(c *gin.Context) {
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		var user models.User
-		err := config.DB.First(&user, "id = ?", claims["sub"]).Error
+		err := config.DB.Preload("Role").First(&user, "id = ?", claims["sub"]).Error
 
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized", "status_code": http.StatusUnauthorized})
@@ -81,7 +81,7 @@ func HeaderAuthMiddleware(c *gin.Context) {
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		var user models.User
-		err := config.DB.First(&user, "id = ?", claims["sub"]).Error
+		err := config.DB.Preload("Role").First(&user, "id = ?", claims["sub"]).Error
 
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized", "status_code": http.StatusUnauthorized})

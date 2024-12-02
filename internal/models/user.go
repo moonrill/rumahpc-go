@@ -9,13 +9,15 @@ import (
 
 type User struct {
 	ID          uuid.UUID      `gorm:"type:uuid;primary_key;default:uuid_generate_v4()" json:"id"`
-	Name        string         `gorm:"type:varchar(255);not null" validate:"required,max=255" json:"name"`
-	Email       string         `gorm:"uniqueIndex;type:varchar(255);not null" validate:"required,email,max=255" json:"email"`
-	Password    string         `gorm:"type:varchar(255);not null" validate:"required,min=6,max=255" json:"password"`
+	Name        string         `gorm:"type:varchar(255);not null" json:"name"`
+	Email       string         `gorm:"uniqueIndex;type:varchar(255);not null" json:"email"`
+	Password    string         `gorm:"type:varchar(255);not null" json:"-"`
 	Avatar      *string        `gorm:"type:text" json:"avatar"`
-	PhoneNumber string         `gorm:"type:varchar(13);not null" validate:"required,max=13" json:"phone_number"`
+	PhoneNumber string         `gorm:"type:varchar(13);not null" json:"phone_number"`
 	Salt        string         `gorm:"type:uuid;not null" json:"-"`
 	CreatedAt   time.Time      `json:"created_at"`
 	UpdatedAt   time.Time      `json:"updated_at"`
 	DeletedAt   gorm.DeletedAt `gorm:"index" json:"deleted_at"`
+	RoleID      string         `gorm:"type:uuid;not null" json:"role_id"`
+	Role        Role           `json:"role" gorm:"foreignKey:RoleID"`
 }

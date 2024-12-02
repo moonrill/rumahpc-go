@@ -10,10 +10,30 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+type SignUpRequest struct {
+	Name        string `json:"name" validate:"required,max=255"`
+	Email       string `json:"email" validate:"required,email,max=255"`
+	Password    string `json:"password" validate:"required,min=8,max=255"`
+	PhoneNumber string `json:"phone_number" validate:"required,max=13"`
+	Role        string `json:"role" validate:"required,max=255"`
+}
+
 func SignUp(c *gin.Context) {
-	var request models.User
+	var request SignUpRequest
 
 	if !utils.ValidateRequest(c, &request) {
+		return
+	}
+
+	role, err := services.GetRoleByName(request.Role)
+
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusNotFound, "Role not found")
+		return
+	}
+
+	if role.Name == "admin" {
+		utils.ErrorResponse(c, http.StatusForbidden, "Admin role not allowed")
 		return
 	}
 
@@ -30,6 +50,7 @@ func SignUp(c *gin.Context) {
 		Password:    hashedPassword,
 		PhoneNumber: request.PhoneNumber,
 		Salt:        salt,
+		RoleID:      role.ID,
 	}
 
 	err = services.CreateUser(&user)
