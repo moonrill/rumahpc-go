@@ -14,5 +14,6 @@ type JwtClaims struct {
 	Sub    string `json:"sub"`
 	Name   string `json:"name"`
 	Avatar string `json:"avatar"`
+	Role   string `json:"role"`
 	jwt.RegisteredClaims
 }

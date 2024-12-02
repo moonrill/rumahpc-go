@@ -46,17 +46,21 @@ func SetupRoutes(router *gin.Engine) {
 		{
 			protected.GET("/profile", controllers.GetProfile)
 
-			protected.POST("/categories", controllers.CreateCategory)
-			protected.PUT("/categories/:id", controllers.UpdateCategory)
-			protected.DELETE("/categories/:id", controllers.DeleteCategory)
+			admin := protected.Group("/")
+			admin.Use(middleware.RoleMiddleware("admin"))
+			{
+				admin.POST("/categories", controllers.CreateCategory)
+				admin.PUT("/categories/:id", controllers.UpdateCategory)
+				admin.DELETE("/categories/:id", controllers.DeleteCategory)
 
-			protected.POST("/subcategories", controllers.CreateSubCategory)
-			protected.PUT("/subcategories/:id", controllers.UpdateSubCategory)
-			protected.DELETE("/subcategories/:id", controllers.DeleteSubCategory)
+				admin.POST("/subcategories", controllers.CreateSubCategory)
+				admin.PUT("/subcategories/:id", controllers.UpdateSubCategory)
+				admin.DELETE("/subcategories/:id", controllers.DeleteSubCategory)
 
-			protected.POST("/brands", controllers.CreateBrand)
-			protected.PUT("/brands/:id", controllers.UpdateBrand)
-			protected.DELETE("/brands/:id", controllers.DeleteBrand)
+				admin.POST("/brands", controllers.CreateBrand)
+				admin.PUT("/brands/:id", controllers.UpdateBrand)
+				admin.DELETE("/brands/:id", controllers.DeleteBrand)
+			}
 		}
 	}
 

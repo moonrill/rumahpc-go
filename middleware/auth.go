@@ -94,3 +94,22 @@ func HeaderAuthMiddleware(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized", "status_code": http.StatusUnauthorized})
 	}
 }
+
+func RoleMiddleware(roles ...string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		user := c.MustGet("user").(models.User)
+
+		for _, role := range roles {
+			if user.Role.Name == role {
+				c.Next()
+				return
+			}
+		}
+
+		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+			"error":       "Forbidden",
+			"status_code": http.StatusForbidden,
+			"message":     "You don't have permission to access this resource",
+		})
+	}
+}
