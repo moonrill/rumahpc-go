@@ -20,9 +20,9 @@ func GetCategories(c *gin.Context) {
 	utils.SuccessResponse(c, http.StatusOK, "Success get categories", categories)
 }
 
-func GetCategoryByID(c *gin.Context) {
-	id := c.Param("id")
-	category, err := services.GetCategoryByID(id)
+func GetCategoryBySlug(c *gin.Context) {
+	slug := c.Param("slug")
+	category, err := services.GetCategoryBySlug(slug)
 	if err != nil || category == nil {
 		utils.ErrorResponse(c, http.StatusNotFound, "Category not found")
 		return
@@ -41,7 +41,7 @@ func CreateCategory(c *gin.Context) {
 	err := services.CreateCategory(&category)
 
 	if err != nil {
-		if err == services.ErrCategoryAlreadyExists {
+		if err == utils.ErrAlreadyExists {
 			utils.ErrorResponse(c, http.StatusConflict, "Category name already exists")
 		} else {
 			utils.ErrorResponse(c, http.StatusInternalServerError, "Error create category")
@@ -63,7 +63,7 @@ func UpdateCategory(c *gin.Context) {
 	err := services.UpdateCategory(id, &category)
 
 	if err != nil {
-		if err == services.ErrCategoryNotFound {
+		if err == utils.ErrNotFound {
 			utils.ErrorResponse(c, http.StatusNotFound, "Category not found")
 		} else {
 			utils.ErrorResponse(c, http.StatusInternalServerError, "Error update category")
@@ -78,7 +78,7 @@ func DeleteCategory(c *gin.Context) {
 	id := c.Param("id")
 
 	if err := services.DeleteCategory(id); err != nil {
-		if err == services.ErrCategoryNotFound {
+		if err == utils.ErrNotFound {
 			utils.ErrorResponse(c, http.StatusNotFound, "Category not found")
 		} else {
 			utils.ErrorResponse(c, http.StatusInternalServerError, "Error delete category")

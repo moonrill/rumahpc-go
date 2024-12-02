@@ -7,9 +7,9 @@ import (
 
 func SeedCategories() {
 	categories := []models.Category{
-		{Name: "Computer", Icon: "computer.png"},
-		{Name: "Laptop", Icon: "laptop.png"},
-		{Name: "PC Parts", Icon: "pc-parts.png"},
+		{Name: "Computer", Slug: "computer", Icon: "computer.png"},
+		{Name: "Laptop", Slug: "laptop", Icon: "laptop.png"},
+		{Name: "PC Parts", Slug: "pc-parts", Icon: "pc-parts.png"},
 	}
 
 	for _, category := range categories {

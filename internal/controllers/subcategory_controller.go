@@ -9,9 +9,20 @@ import (
 	"github.com/moonrill/rumahpc-api/utils"
 )
 
-func GetSubCategoriesByCategoryID(c *gin.Context) {
-	id := c.Param("id")
-	subCategories, err := services.GetSubCategoriesByCategoryID(id)
+func GetSubCategories(c *gin.Context) {
+	subCategories, err := services.GetSubCategories()
+
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Error get subcategories")
+		return
+	}
+
+	utils.SuccessResponse(c, http.StatusOK, "Success get subcategories", subCategories)
+}
+
+func GetSubCategoriesBySlug(c *gin.Context) {
+	slug := c.Param("slug")
+	subCategories, err := services.GetSubCategoriesBySlug(slug)
 
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusInternalServerError, "Error get subcategories")
@@ -31,9 +42,9 @@ func CreateSubCategory(c *gin.Context) {
 
 	if err != nil {
 		switch err {
-		case services.ErrCategoryNotFound:
+		case utils.ErrNotFound:
 			utils.ErrorResponse(c, http.StatusNotFound, "Category not found")
-		case services.ErrSubCategoryAlreadyExists:
+		case utils.ErrAlreadyExists:
 			utils.ErrorResponse(c, http.StatusConflict, "Subcategory name already exists")
 		default:
 			utils.ErrorResponse(c, http.StatusInternalServerError, "Error create subcategory")
@@ -42,4 +53,41 @@ func CreateSubCategory(c *gin.Context) {
 	}
 
 	utils.SuccessResponse(c, http.StatusCreated, "Success create subcategory", subCategory)
+}
+
+func UpdateSubCategory(c *gin.Context) {
+	var subCategory models.SubCategory
+	id := c.Param("id")
+
+	if !utils.ValidateRequest(c, &subCategory) {
+		return
+	}
+
+	err := services.UpdateSubCategory(id, &subCategory)
+
+	if err != nil {
+		if err == utils.ErrNotFound {
+			utils.ErrorResponse(c, http.StatusNotFound, "Subcategory not found")
+		} else {
+			utils.ErrorResponse(c, http.StatusInternalServerError, "Error update subcategory")
+		}
+		return
+	}
+
+	utils.SuccessResponse(c, http.StatusOK, "Success update subcategory", subCategory)
+}
+
+func DeleteSubCategory(c *gin.Context) {
+	id := c.Param("id")
+
+	if err := services.DeleteSubCategory(id); err != nil {
+		if err == utils.ErrNotFound {
+			utils.ErrorResponse(c, http.StatusNotFound, "Subcategory not found")
+		} else {
+			utils.ErrorResponse(c, http.StatusInternalServerError, "Error delete subcategory")
+		}
+		return
+	}
+
+	utils.SuccessResponse(c, http.StatusOK, "Success delete subcategory", nil)
 }

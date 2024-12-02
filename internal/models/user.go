@@ -19,4 +19,5 @@ type User struct {
 	DeletedAt   gorm.DeletedAt `gorm:"index" json:"deleted_at"`
 	RoleID      string         `gorm:"type:uuid;not null" json:"role_id"`
 	Role        Role           `json:"role" gorm:"foreignKey:RoleID"`
+	Addresses   []Address      `json:"addresses" gorm:"foreignKey:UserID"`
 }

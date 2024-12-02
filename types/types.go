@@ -6,7 +6,7 @@ type SignUpRequest struct {
 	Name        string `json:"name" validate:"required,max=255"`
 	Email       string `json:"email" validate:"required,email,max=255"`
 	Password    string `json:"password" validate:"required,min=8,max=255"`
-	PhoneNumber string `json:"phone_number" validate:"required,max=13"`
+	PhoneNumber string `json:"phone_number" validate:"required, min=10, max=13"`
 	Role        string `json:"role" validate:"required,max=255"`
 }
 

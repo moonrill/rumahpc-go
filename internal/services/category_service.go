@@ -1,15 +1,11 @@
 package services
 
 import (
-	"errors"
-
 	"github.com/moonrill/rumahpc-api/config"
 	"github.com/moonrill/rumahpc-api/internal/models"
+	"github.com/moonrill/rumahpc-api/utils"
 	"gorm.io/gorm"
 )
-
-var ErrCategoryAlreadyExists = errors.New("category name already exists")
-var ErrCategoryNotFound = errors.New("category not found")
 
 func GetCategories() ([]models.Category, error) {
 	var categories []models.Category
@@ -18,9 +14,9 @@ func GetCategories() ([]models.Category, error) {
 	return categories, err
 }
 
-func GetCategoryByID(id string) (*models.Category, error) {
+func GetCategoryBySlug(slug string) (*models.Category, error) {
 	var category models.Category
-	err := config.DB.Preload("SubCategories").First(&category, "id = ?", id).Error
+	err := config.DB.Preload("SubCategories").First(&category, "slug = ?", slug).Error
 
 	if err == gorm.ErrRecordNotFound {
 		return nil, nil
@@ -34,7 +30,7 @@ func CreateCategory(category *models.Category) error {
 	err := config.DB.First(&existingCategory, "name = ?", category.Name).Error
 
 	if err == nil {
-		return ErrCategoryAlreadyExists
+		return utils.ErrAlreadyExists
 	}
 
 	return config.DB.Create(category).Error
@@ -45,7 +41,7 @@ func UpdateCategory(id string, category *models.Category) error {
 	err := config.DB.First(&existingCategory, "id = ?", id).Error
 
 	if err == gorm.ErrRecordNotFound {
-		return ErrCategoryNotFound
+		return utils.ErrNotFound
 	}
 
 	existingCategory.Name = category.Name
@@ -69,7 +65,7 @@ func DeleteCategory(id string) error {
 	err := config.DB.First(&category, "id = ?", id).Error
 
 	if err == gorm.ErrRecordNotFound {
-		return ErrCategoryNotFound
+		return utils.ErrNotFound
 	}
 
 	return config.DB.Delete(&category).Error

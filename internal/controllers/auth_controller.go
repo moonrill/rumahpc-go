@@ -49,7 +49,7 @@ func SignUp(c *gin.Context) {
 	err = services.CreateUser(&user)
 
 	if err != nil {
-		if err == services.ErrUserAlreadyExists {
+		if err == utils.ErrAlreadyExists {
 			utils.ErrorResponse(c, http.StatusConflict, "User already exists")
 		} else {
 			utils.ErrorResponse(c, http.StatusInternalServerError, "Error create user", err.Error())

@@ -23,12 +23,18 @@ func SetupRoutes(router *gin.Engine) {
 		categories := v1.Group("/categories")
 		{
 			categories.GET("/", controllers.GetCategories)
-			categories.GET("/:id", controllers.GetCategoryByID)
+			categories.GET("/:slug", controllers.GetCategoryBySlug)
 		}
 
 		subcategories := v1.Group("/subcategories")
 		{
-			subcategories.GET("/:id", controllers.GetSubCategoriesByCategoryID)
+			subcategories.GET("/", controllers.GetSubCategories)
+			subcategories.GET("/:slug", controllers.GetSubCategoriesBySlug)
+		}
+
+		brands := v1.Group("/brands")
+		{
+			brands.GET("/", controllers.GetBrands)
 		}
 
 		// Protected routes
@@ -38,12 +44,14 @@ func SetupRoutes(router *gin.Engine) {
 		protected.Use(middleware.HeaderAuthMiddleware)
 		{
 			protected.GET("/profile", controllers.GetProfile)
+
 			protected.POST("/categories", controllers.CreateCategory)
 			protected.PUT("/categories/:id", controllers.UpdateCategory)
 			protected.DELETE("/categories/:id", controllers.DeleteCategory)
 
-			// Protected subcategory routes
 			protected.POST("/subcategories", controllers.CreateSubCategory)
+			protected.PUT("/subcategories/:id", controllers.UpdateSubCategory)
+			protected.DELETE("/subcategories/:id", controllers.DeleteSubCategory)
 		}
 	}
 
