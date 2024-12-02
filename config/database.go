@@ -30,7 +30,15 @@ func InitDatabase() {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 
-	err = db.AutoMigrate(&models.Category{}, &models.User{}, &models.SubCategory{}, &models.Brand{}, &models.Role{})
+	err = db.AutoMigrate(
+		&models.Category{},
+		&models.User{},
+		&models.SubCategory{},
+		&models.Brand{},
+		&models.Role{},
+		&models.Address{},
+		&models.Product{},
+	)
 
 	if err != nil {
 		log.Fatalf("Failed to migrate database: %v", err)

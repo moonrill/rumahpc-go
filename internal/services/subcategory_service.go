@@ -83,5 +83,8 @@ func DeleteSubCategory(id string) error {
 		return utils.ErrNotFound
 	}
 
+	// Set slug to null before delete
+	config.DB.Model(&models.SubCategory{}).Where("id = ?", id).Update("slug", nil)
+
 	return config.DB.Delete(&subCategory).Error
 }

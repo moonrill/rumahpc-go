@@ -35,6 +35,7 @@ func SetupRoutes(router *gin.Engine) {
 		brands := v1.Group("/brands")
 		{
 			brands.GET("/", controllers.GetBrands)
+			brands.GET("/:slug", controllers.GetBrandBySlug)
 		}
 
 		// Protected routes
@@ -52,6 +53,10 @@ func SetupRoutes(router *gin.Engine) {
 			protected.POST("/subcategories", controllers.CreateSubCategory)
 			protected.PUT("/subcategories/:id", controllers.UpdateSubCategory)
 			protected.DELETE("/subcategories/:id", controllers.DeleteSubCategory)
+
+			protected.POST("/brands", controllers.CreateBrand)
+			protected.PUT("/brands/:id", controllers.UpdateBrand)
+			protected.DELETE("/brands/:id", controllers.DeleteBrand)
 		}
 	}
 

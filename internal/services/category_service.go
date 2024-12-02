@@ -34,7 +34,7 @@ func GetCategoryBySlug(slug string) (*models.Category, error) {
 		return nil, nil
 	}
 
-	return &category, err
+	return &category, nil
 }
 
 func CreateCategory(category *models.Category) error {

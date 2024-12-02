@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/moonrill/rumahpc-api/config"
 	"github.com/moonrill/rumahpc-api/internal/models"
 	"github.com/moonrill/rumahpc-api/internal/services"
 	"github.com/moonrill/rumahpc-api/utils"
@@ -84,9 +83,6 @@ func UpdateSubCategory(c *gin.Context) {
 
 func DeleteSubCategory(c *gin.Context) {
 	id := c.Param("id")
-
-	// Set slug to null before delete
-	config.DB.Model(&models.SubCategory{}).Where("id = ?", id).Update("slug", nil)
 
 	if err := services.DeleteSubCategory(id); err != nil {
 		if err == utils.ErrNotFound {
