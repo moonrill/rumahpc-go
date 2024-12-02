@@ -35,10 +35,16 @@ func SeedUsers() {
 	}
 
 	for _, user := range users {
+		_, err := services.FindUserByEmail(user.Email)
+
+		if err == nil {
+			continue
+		}
+
 		hashedPassword, salt, err := services.HashPassword(user.Password)
 
 		if err != nil {
-			fmt.Println(err)
+			fmt.Println("Error hashing password:", err)
 			return
 		}
 
