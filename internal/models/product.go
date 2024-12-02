@@ -18,12 +18,12 @@ type Product struct {
 	CreatedAt     time.Time      `json:"created_at"`
 	UpdatedAt     time.Time      `json:"updated_at"`
 	DeletedAt     gorm.DeletedAt `gorm:"index" json:"deleted_at"`
-	BrandID       *string        `gorm:"type:uuid;not null" json:"brand_id"`
+	BrandID       *string        `gorm:"type:uuid;" json:"brand_id"`
 	Brand         *Brand         `json:"brand" gorm:"foreignKey:BrandID"`
 	CategoryID    string         `gorm:"type:uuid;not null" validate:"required" json:"category_id"`
 	Category      Category       `json:"category" gorm:"foreignKey:CategoryID"`
 	SubCategory   *SubCategory   `json:"sub_category" gorm:"foreignKey:SubCategoryID"`
-	SubCategoryID *string        `gorm:"type:uuid;not null" json:"sub_category_id"`
+	SubCategoryID *string        `gorm:"type:uuid;" json:"sub_category_id"`
 }
 
 func (p *Product) BeforeCreate(tx *gorm.DB) (err error) {

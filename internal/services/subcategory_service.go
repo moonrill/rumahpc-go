@@ -7,11 +7,23 @@ import (
 	"gorm.io/gorm"
 )
 
-func GetSubCategories() ([]models.SubCategory, error) {
+func GetSubCategories(page, limit int) ([]models.SubCategory, int64, error) {
 	var subCategories []models.SubCategory
-	err := config.DB.Preload("Category").Find(&subCategories).Error
+	var totalCount int64
 
-	return subCategories, err
+	offset := (page - 1) * limit
+
+	if err := config.DB.Model(&models.SubCategory{}).Count(&totalCount).Error; err != nil {
+		return nil, 0, err
+	}
+
+	result := config.DB.Preload("Category").Offset(offset).Limit(limit).Find(&subCategories)
+
+	if result.Error != nil {
+		return nil, 0, result.Error
+	}
+
+	return subCategories, totalCount, nil
 }
 
 func GetSubCategoriesBySlug(slug string) ([]models.SubCategory, error) {

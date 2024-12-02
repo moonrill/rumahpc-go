@@ -10,14 +10,18 @@ import (
 )
 
 func GetCategories(c *gin.Context) {
-	categories, err := services.GetCategories()
+	page, limit := utils.ExtractPaginationParams(c)
+
+	categories, totalItems, err := services.GetCategories(page, limit)
 
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusInternalServerError, "Error get categories")
 		return
 	}
 
-	utils.SuccessResponse(c, http.StatusOK, "Success get categories", categories)
+	totalPages := int((totalItems + int64(limit) - 1) / int64(limit))
+
+	utils.SuccessResponse(c, http.StatusOK, "Success get categories", categories, page, limit, totalItems, totalPages)
 }
 
 func GetCategoryBySlug(c *gin.Context) {

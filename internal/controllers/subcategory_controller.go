@@ -4,20 +4,25 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/moonrill/rumahpc-api/config"
 	"github.com/moonrill/rumahpc-api/internal/models"
 	"github.com/moonrill/rumahpc-api/internal/services"
 	"github.com/moonrill/rumahpc-api/utils"
 )
 
 func GetSubCategories(c *gin.Context) {
-	subCategories, err := services.GetSubCategories()
+	page, limit := utils.ExtractPaginationParams(c)
+
+	subCategories, totalItems, err := services.GetSubCategories(page, limit)
 
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusInternalServerError, "Error get subcategories")
 		return
 	}
 
-	utils.SuccessResponse(c, http.StatusOK, "Success get subcategories", subCategories)
+	totalPages := int((totalItems + int64(limit) - 1) / int64(limit))
+
+	utils.SuccessResponse(c, http.StatusOK, "Success get subcategories", subCategories, page, limit, totalItems, totalPages)
 }
 
 func GetSubCategoriesBySlug(c *gin.Context) {
@@ -79,6 +84,9 @@ func UpdateSubCategory(c *gin.Context) {
 
 func DeleteSubCategory(c *gin.Context) {
 	id := c.Param("id")
+
+	// Set slug to null before delete
+	config.DB.Model(&models.SubCategory{}).Where("id = ?", id).Update("slug", nil)
 
 	if err := services.DeleteSubCategory(id); err != nil {
 		if err == utils.ErrNotFound {
