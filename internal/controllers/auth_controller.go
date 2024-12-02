@@ -6,20 +6,13 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/moonrill/rumahpc-api/internal/models"
 	"github.com/moonrill/rumahpc-api/internal/services"
+	"github.com/moonrill/rumahpc-api/types"
 	"github.com/moonrill/rumahpc-api/utils"
 	"golang.org/x/crypto/bcrypt"
 )
 
-type SignUpRequest struct {
-	Name        string `json:"name" validate:"required,max=255"`
-	Email       string `json:"email" validate:"required,email,max=255"`
-	Password    string `json:"password" validate:"required,min=8,max=255"`
-	PhoneNumber string `json:"phone_number" validate:"required,max=13"`
-	Role        string `json:"role" validate:"required,max=255"`
-}
-
 func SignUp(c *gin.Context) {
-	var request SignUpRequest
+	var request types.SignUpRequest
 
 	if !utils.ValidateRequest(c, &request) {
 		return

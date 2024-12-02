@@ -7,15 +7,9 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/moonrill/rumahpc-api/internal/models"
+	"github.com/moonrill/rumahpc-api/types"
 	"golang.org/x/crypto/bcrypt"
 )
-
-type Claims struct {
-	Sub    string `json:"sub"`
-	Name   string `json:"name"`
-	Avatar string `json:"avatar"`
-	jwt.RegisteredClaims
-}
 
 func HashPassword(password string) (string, string, error) {
 	salt := uuid.New().String()
@@ -35,11 +29,11 @@ func GenerateToken(user *models.User) (string, error) {
 		avatar = ""
 	}
 
-	claims := Claims{
-		user.ID.String(),
-		user.Name,
-		avatar,
-		jwt.RegisteredClaims{
+	claims := types.JwtClaims{
+		Sub:    user.ID,
+		Name:   user.Name,
+		Avatar: avatar,
+		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24 * 7)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			Issuer:    "rumahpc-api",
