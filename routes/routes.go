@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/moonrill/rumahpc-api/internal/controllers"
 	"github.com/moonrill/rumahpc-api/middleware"
+	"github.com/moonrill/rumahpc-api/utils"
 )
 
 func SetupRoutes(router *gin.Engine) {
@@ -13,6 +14,7 @@ func SetupRoutes(router *gin.Engine) {
 
 	v1 := router.Group("/api/v1")
 	{
+		v1.GET("/image/*path", utils.ServeImage)
 
 		auth := v1.Group("/auth")
 		{

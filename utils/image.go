@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -53,4 +54,17 @@ func isAllowedExt(ext string) bool {
 	}
 
 	return false
+}
+
+func ServeImage(c *gin.Context) {
+	path := c.Param("path")
+	fullPath := filepath.Join("./uploads", path)
+
+	// Check if file exists
+	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
+		ErrorResponse(c, http.StatusNotFound, "Image not found")
+		return
+	}
+
+	c.File(fullPath)
 }
