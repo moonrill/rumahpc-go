@@ -40,8 +40,6 @@ func SetupRoutes(router *gin.Engine) {
 
 		// Protected routes
 		protected := v1.Group("/")
-		// TODO: choose the auth middleware
-		// protected.Use(middleware.CookiesAuthMiddleware)
 		protected.Use(middleware.HeaderAuthMiddleware)
 		{
 			protected.GET("/profile", controllers.GetProfile)
@@ -50,14 +48,17 @@ func SetupRoutes(router *gin.Engine) {
 			admin.Use(middleware.RoleMiddleware("admin"))
 			{
 				admin.POST("/categories", controllers.CreateCategory)
+				admin.POST("/categories/upload", controllers.UploadCategoryIcon)
 				admin.PUT("/categories/:id", controllers.UpdateCategory)
 				admin.DELETE("/categories/:id", controllers.DeleteCategory)
 
 				admin.POST("/subcategories", controllers.CreateSubCategory)
+				admin.POST("/subcategories/upload", controllers.UploadSubCategoryIcon)
 				admin.PUT("/subcategories/:id", controllers.UpdateSubCategory)
 				admin.DELETE("/subcategories/:id", controllers.DeleteSubCategory)
 
 				admin.POST("/brands", controllers.CreateBrand)
+				admin.POST("/brands/upload", controllers.UploadBrandIcon)
 				admin.PUT("/brands/:id", controllers.UpdateBrand)
 				admin.DELETE("/brands/:id", controllers.DeleteBrand)
 			}

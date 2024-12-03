@@ -57,7 +57,7 @@ func UpdateBrand(id string, brand *models.Brand) error {
 	}
 
 	existingBrand.Name = brand.Name
-	existingBrand.Image = brand.Image
+	existingBrand.Icon = brand.Icon
 
 	if err := config.DB.Save(&existingBrand).Error; err != nil {
 		return err

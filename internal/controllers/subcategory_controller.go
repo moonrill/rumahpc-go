@@ -95,3 +95,25 @@ func DeleteSubCategory(c *gin.Context) {
 
 	utils.SuccessResponse(c, http.StatusOK, "Success delete subcategory", nil)
 }
+
+func UploadSubCategoryIcon(c *gin.Context) {
+	filename, err := utils.UploadImageHandler(c, "uploads/subcategory")
+
+	if err != nil {
+		switch err {
+		case utils.ErrUploadImage:
+			utils.ErrorResponse(c, http.StatusBadRequest, "Failed to upload image")
+		case utils.ErrUploadImageExt:
+			utils.ErrorResponse(c, http.StatusBadRequest, "Image extension not allowed")
+		case utils.ErrUploadImageSize:
+			utils.ErrorResponse(c, http.StatusBadRequest, "Image size too large")
+		case utils.ErrSaveImage:
+			utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to save image")
+		default:
+			utils.ErrorResponse(c, http.StatusInternalServerError, "Error upload subcategory icon")
+		}
+		return
+	}
+
+	utils.SuccessResponse(c, http.StatusOK, "Success upload subcategory icon", filename)
+}

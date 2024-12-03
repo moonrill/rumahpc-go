@@ -98,3 +98,25 @@ func DeleteBrand(c *gin.Context) {
 
 	utils.SuccessResponse(c, http.StatusOK, "Success delete brand", nil)
 }
+
+func UploadBrandIcon(c *gin.Context) {
+	filename, err := utils.UploadImageHandler(c, "uploads/brand")
+
+	if err != nil {
+		switch err {
+		case utils.ErrUploadImage:
+			utils.ErrorResponse(c, http.StatusBadRequest, "Failed to upload image")
+		case utils.ErrUploadImageExt:
+			utils.ErrorResponse(c, http.StatusBadRequest, "Image extension not allowed")
+		case utils.ErrUploadImageSize:
+			utils.ErrorResponse(c, http.StatusBadRequest, "Image size too large")
+		case utils.ErrSaveImage:
+			utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to save image")
+		default:
+			utils.ErrorResponse(c, http.StatusInternalServerError, "Error upload category icon")
+		}
+		return
+	}
+
+	utils.SuccessResponse(c, http.StatusOK, "Success upload brand icon", filename)
+}

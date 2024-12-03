@@ -11,7 +11,7 @@ type Brand struct {
 	ID        string         `gorm:"type:uuid;primary_key;default:uuid_generate_v4()" json:"id"`
 	Name      string         `gorm:"type:varchar(255);not null" validate:"required,max=255" json:"name"`
 	Slug      string         `gorm:"type:varchar(255);" json:"slug"`
-	Image     string         `gorm:"type:text" json:"image"`
+	Icon      string         `gorm:"type:text" json:"icon"`
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"deleted_at"`
