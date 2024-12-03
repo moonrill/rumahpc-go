@@ -29,7 +29,7 @@ func SetupRoutes(router *gin.Engine) {
 		subcategories := v1.Group("/subcategories")
 		{
 			subcategories.GET("/", controllers.GetSubCategories)
-			subcategories.GET("/:slug", controllers.GetSubCategoriesBySlug)
+			subcategories.GET("/:slug", controllers.GetSubCategoryBySlug)
 		}
 
 		brands := v1.Group("/brands")
@@ -61,6 +61,16 @@ func SetupRoutes(router *gin.Engine) {
 				admin.POST("/brands/upload", controllers.UploadBrandIcon)
 				admin.PUT("/brands/:id", controllers.UpdateBrand)
 				admin.DELETE("/brands/:id", controllers.DeleteBrand)
+			}
+
+			customerMerchant := protected.Group("/")
+			customerMerchant.Use(middleware.RoleMiddleware("customer", "merchant"))
+			{
+				customerMerchant.GET("/addresses", controllers.GetAddress)
+				customerMerchant.GET("/addresses/:id", controllers.GetAddressById)
+				customerMerchant.POST("/addresses", controllers.CreateAddress)
+				customerMerchant.PUT("/addresses/:id", controllers.UpdateAddress)
+				customerMerchant.DELETE("/addresses/:id", controllers.DeleteAddress)
 			}
 		}
 	}

@@ -15,6 +15,7 @@ type Product struct {
 	Price         int            `gorm:"type:integer;not null" validate:"required,gte=0" json:"price"`
 	Stock         int            `gorm:"type:integer;not null" validate:"required,gte=0" json:"stock"`
 	Weight        int            `gorm:"type:integer;not null" validate:"required,gte=0" json:"weight"`
+	Status        Status         `gorm:"type:varchar(255);default:'active';not null" json:"status"`
 	CreatedAt     time.Time      `json:"created_at"`
 	UpdatedAt     time.Time      `json:"updated_at"`
 	DeletedAt     gorm.DeletedAt `gorm:"index" json:"deleted_at"`
@@ -25,6 +26,13 @@ type Product struct {
 	SubCategory   *SubCategory   `json:"sub_category" gorm:"foreignKey:SubCategoryID"`
 	SubCategoryID *string        `gorm:"type:uuid;" json:"sub_category_id"`
 }
+
+type Status string
+
+const (
+	Active   Status = "active"
+	Inactive Status = "inactive"
+)
 
 func (p *Product) BeforeCreate(tx *gorm.DB) (err error) {
 	p.Slug = utils.Slugify(p.Name)
