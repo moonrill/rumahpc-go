@@ -26,11 +26,18 @@ func GetSubCategories(page, limit int) ([]models.SubCategory, int64, error) {
 	return subCategories, totalCount, nil
 }
 
-func GetSubCategoriesBySlug(slug string) ([]models.SubCategory, error) {
-	var subCategories []models.SubCategory
-	err := config.DB.Preload("Category").Where("slug = ?", slug).Find(&subCategories).Error
+func GetSubCategoryBySlug(slug string) (*models.SubCategory, error) {
+	var subCategory models.SubCategory
+	err := config.DB.Preload("Category").Where("slug = ?", slug).First(&subCategory).Error
 
-	return subCategories, err
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, utils.ErrNotFound
+		}
+		return nil, err
+	}
+
+	return &subCategory, nil
 }
 
 func CreateSubCategory(subCategory *models.SubCategory) error {

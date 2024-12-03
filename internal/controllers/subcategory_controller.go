@@ -24,12 +24,17 @@ func GetSubCategories(c *gin.Context) {
 	utils.SuccessResponse(c, http.StatusOK, "Success get subcategories", subCategories, page, limit, totalItems, totalPages)
 }
 
-func GetSubCategoriesBySlug(c *gin.Context) {
+func GetSubCategoryBySlug(c *gin.Context) {
 	slug := c.Param("slug")
-	subCategories, err := services.GetSubCategoriesBySlug(slug)
+	subCategories, err := services.GetSubCategoryBySlug(slug)
 
-	if err != nil {
-		utils.ErrorResponse(c, http.StatusInternalServerError, "Error get subcategories")
+	if err != nil || subCategories == nil {
+		if err == utils.ErrNotFound {
+			utils.ErrorResponse(c, http.StatusNotFound, "Subcategory not found")
+		} else {
+			utils.ErrorResponse(c, http.StatusInternalServerError, "Error get subcategory")
+		}
+		return
 	}
 
 	utils.SuccessResponse(c, http.StatusOK, "Success get subcategories", subCategories)

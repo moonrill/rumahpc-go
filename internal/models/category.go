@@ -15,8 +15,8 @@ type Category struct {
 	CreatedAt     time.Time      `json:"created_at"`
 	UpdatedAt     time.Time      `json:"updated_at"`
 	DeletedAt     gorm.DeletedAt `gorm:"index" json:"deleted_at"`
-	SubCategories []SubCategory  `json:"sub_categories" gorm:"foreignKey:CategoryID"`
-	Products      []Product      `json:"products" gorm:"foreignKey:CategoryID"`
+	SubCategories *[]SubCategory `json:"sub_categories" gorm:"foreignKey:CategoryID"`
+	Products      *[]Product     `json:"products" gorm:"foreignKey:CategoryID"`
 }
 
 func (c *Category) BeforeCreate(tx *gorm.DB) (err error) {
