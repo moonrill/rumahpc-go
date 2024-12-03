@@ -14,6 +14,7 @@ type Address struct {
 	Province      string         `gorm:"type:varchar(255);not null" validate:"required,max=255" json:"province"`
 	City          string         `gorm:"type:varchar(255);not null" validate:"required,max=255" json:"city"`
 	District      string         `gorm:"type:varchar(255);not null" validate:"required,max=255" json:"district"`
+	Village       string         `gorm:"type:varchar(255);not null" validate:"required,max=255" json:"village"`
 	ZipCode       string         `gorm:"type:varchar(10);not null" validate:"required,max=10" json:"zip_code"`
 	Address       string         `gorm:"type:text;not null" validate:"required" json:"address"`
 	Note          string         `gorm:"type:text" json:"note"`

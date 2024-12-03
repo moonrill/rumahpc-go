@@ -109,6 +109,7 @@ func UpdateAddress(c *gin.Context) {
 	existingAddress.Province = requestBody.Province
 	existingAddress.City = requestBody.City
 	existingAddress.District = requestBody.District
+	existingAddress.Village = requestBody.Village
 	existingAddress.ZipCode = requestBody.ZipCode
 	existingAddress.Address = requestBody.Address
 	existingAddress.Note = requestBody.Note
