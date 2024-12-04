@@ -11,8 +11,9 @@ import (
 	"github.com/google/uuid"
 )
 
+var maxSize int64 = 1024 * 1024 * 10
+
 func UploadImageHandler(c *gin.Context, path string) (*string, error) {
-	var maxSize int64 = 1024 * 1024 * 10
 	file, err := c.FormFile("image")
 
 	if err != nil {
@@ -67,4 +68,46 @@ func ServeImage(c *gin.Context) {
 	}
 
 	c.File(fullPath)
+}
+
+func UploadMultipleImageHandler(c *gin.Context, path string) ([]string, error) {
+	form, err := c.MultipartForm()
+
+	if err != nil {
+		return nil, ErrUploadImage
+	}
+
+	files := form.File["images"]
+
+	if len(files) == 0 {
+		return nil, ErrEmptyUpload
+	}
+
+	var uploadedImages []string
+	for _, file := range files {
+		if file.Size > maxSize {
+			return nil, ErrUploadImageSize
+		}
+
+		ext := filepath.Ext(file.Filename)
+		if !isAllowedExt(ext) {
+			return nil, ErrUploadImageExt
+		}
+
+		savedFilename := fmt.Sprintf("%s%s", uuid.New().String(), ext)
+
+		if err := os.MkdirAll(path, os.ModePerm); err != nil {
+			return nil, err
+		}
+
+		fullPath := filepath.Join(path, savedFilename)
+
+		if err := c.SaveUploadedFile(file, fullPath); err != nil {
+			return nil, ErrSaveImage
+		}
+
+		uploadedImages = append(uploadedImages, savedFilename)
+	}
+
+	return uploadedImages, nil
 }

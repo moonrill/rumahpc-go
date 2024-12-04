@@ -17,3 +17,26 @@ type JwtClaims struct {
 	Role   string `json:"role"`
 	jwt.RegisteredClaims
 }
+
+type CreateProductRequest struct {
+	Name          string   `json:"name" validate:"required,max=255"`
+	Description   string   `json:"description" validate:"required"`
+	Stock         int      `json:"stock" validate:"required,gte=0"`
+	Price         int      `json:"price" validate:"required,gte=0"`
+	Weight        int      `json:"weight" validate:"required,gte=0"`
+	CategoryID    string   `json:"category_id" validate:"required"`
+	SubCategoryID *string  `json:"sub_category_id"`
+	BrandID       *string  `json:"brand_id"`
+	Images        []string `json:"images" validate:"required,gte=1"`
+}
+
+type UpdateProductRequest struct {
+	Name          string  `json:"name" validate:"required,max=255"`
+	Description   string  `json:"description" validate:"required"`
+	Stock         int     `json:"stock" validate:"required,gte=0"`
+	Price         int     `json:"price" validate:"required,gte=0"`
+	Weight        int     `json:"weight" validate:"required,gte=0"`
+	CategoryID    string  `json:"category_id" validate:"required"`
+	SubCategoryID *string `json:"sub_category_id"`
+	BrandID       *string `json:"brand_id"`
+}

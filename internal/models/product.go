@@ -1,8 +1,10 @@
 package models
 
 import (
+	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/moonrill/rumahpc-api/utils"
 	"gorm.io/gorm"
 )
@@ -19,12 +21,15 @@ type Product struct {
 	CreatedAt     time.Time      `json:"created_at"`
 	UpdatedAt     time.Time      `json:"updated_at"`
 	DeletedAt     gorm.DeletedAt `gorm:"index" json:"deleted_at"`
+	MerchantID    string         `gorm:"type:uuid;not null" validate:"required" json:"merchant_id"`
+	Merchant      *User          `json:"merchant" gorm:"foreignKey:MerchantID"`
 	BrandID       *string        `gorm:"type:uuid;" json:"brand_id"`
 	Brand         *Brand         `json:"brand" gorm:"foreignKey:BrandID"`
 	CategoryID    string         `gorm:"type:uuid;not null" validate:"required" json:"category_id"`
-	Category      Category       `json:"category" gorm:"foreignKey:CategoryID"`
+	Category      *Category      `json:"category" gorm:"foreignKey:CategoryID"`
 	SubCategory   *SubCategory   `json:"sub_category" gorm:"foreignKey:SubCategoryID"`
 	SubCategoryID *string        `gorm:"type:uuid;" json:"sub_category_id"`
+	Images        *[]string      `json:"images" gorm:"-"`
 }
 
 type Status string
@@ -35,11 +40,16 @@ const (
 )
 
 func (p *Product) BeforeCreate(tx *gorm.DB) (err error) {
-	p.Slug = utils.Slugify(p.Name)
+	slug := utils.Slugify(p.Name)
+
+	p.ID = uuid.New().String()
+	p.Slug = fmt.Sprintf("%s-%s", slug, p.ID)
 	return
 }
 
 func (p *Product) BeforeUpdate(tx *gorm.DB) (err error) {
-	p.Slug = utils.Slugify(p.Name)
+	slug := utils.Slugify(p.Name)
+
+	p.Slug = fmt.Sprintf("%s-%s", slug, p.ID)
 	return
 }

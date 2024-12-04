@@ -40,6 +40,14 @@ func SetupRoutes(router *gin.Engine) {
 			brands.GET("/:slug", controllers.GetBrandBySlug)
 		}
 
+		product := v1.Group("/products")
+		{
+			product.GET("/", controllers.GetProducts)
+			product.GET("/category/:slug", controllers.GetProductsByCategorySlug)
+			product.GET("/subcategory/:slug", controllers.GetProductsBySubCategorySlug)
+			product.GET("/:slug", controllers.GetProduct)
+		}
+
 		// Protected routes
 		protected := v1.Group("/")
 		protected.Use(middleware.HeaderAuthMiddleware)
@@ -63,6 +71,16 @@ func SetupRoutes(router *gin.Engine) {
 				admin.POST("/brands/upload", controllers.UploadBrandIcon)
 				admin.PUT("/brands/:id", controllers.UpdateBrand)
 				admin.DELETE("/brands/:id", controllers.DeleteBrand)
+			}
+
+			merchant := protected.Group("/")
+			merchant.Use(middleware.RoleMiddleware("merchant"))
+			{
+				merchant.POST("/products", controllers.CreateProduct)
+				merchant.POST("/products/upload", controllers.UploadProductImage)
+				merchant.POST("/products/upload/multiple", controllers.UploadMultipleProductImages)
+				merchant.PUT("/products/status/:id", controllers.ToggleProductStatus)
+				merchant.PUT("/products/:id", controllers.UpdateProduct)
 			}
 
 			customerMerchant := protected.Group("/")

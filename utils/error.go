@@ -4,6 +4,8 @@ import "errors"
 
 var ErrAlreadyExists = errors.New("already exists")
 var ErrNotFound = errors.New("not found")
+var ErrForbidden = errors.New("forbidden")
+var ErrEmptyUpload = errors.New("empty upload")
 var ErrUploadImage = errors.New("failed to upload image")
 var ErrUploadImageExt = errors.New("image extension not allowed")
 var ErrUploadImageSize = errors.New("image size too large")

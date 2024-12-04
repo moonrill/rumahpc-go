@@ -20,4 +20,5 @@ type User struct {
 	RoleID      string         `gorm:"type:uuid;not null" json:"role_id"`
 	Role        Role           `json:"role" gorm:"foreignKey:RoleID"`
 	Addresses   []Address      `json:"addresses" gorm:"foreignKey:UserID"`
+	Products    *[]Product     `json:"products,omitempty" gorm:"foreignKey:MerchantID"`
 }
