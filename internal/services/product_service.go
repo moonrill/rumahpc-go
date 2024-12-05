@@ -193,10 +193,10 @@ func ToggleProductStatus(id string, merchantID string) error {
 		return utils.ErrForbidden
 	}
 
-	if product.Status == "active" {
-		product.Status = "inactive"
+	if product.Status == models.ProductStatusActive {
+		product.Status = models.ProductStatusInactive
 	} else {
-		product.Status = "active"
+		product.Status = models.ProductStatusActive
 	}
 
 	if err := config.DB.Save(&product).Error; err != nil {

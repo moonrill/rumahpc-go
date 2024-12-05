@@ -12,7 +12,7 @@ type SubCategory struct {
 	CategoryID string         `gorm:"type:uuid;not null" validate:"required" json:"category_id"`
 	Name       string         `gorm:"type:varchar(255);not null" validate:"required" json:"name"`
 	Slug       string         `gorm:"type:varchar(255);uniqueIndex" json:"slug"`
-	Icon       string         `gorm:"type:text" validate:"required" json:"icon"`
+	Icon       *string        `gorm:"type:text" json:"icon"`
 	CreatedAt  time.Time      `json:"created_at"`
 	UpdatedAt  time.Time      `json:"updated_at"`
 	DeletedAt  gorm.DeletedAt `gorm:"index" json:"deleted_at"`

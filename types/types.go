@@ -23,11 +23,11 @@ type CreateProductRequest struct {
 	Description   string   `json:"description" validate:"required"`
 	Stock         int      `json:"stock" validate:"required,gte=0"`
 	Price         int      `json:"price" validate:"required,gte=0"`
-	Weight        int      `json:"weight" validate:"required,gte=0"`
+	Weight        float64  `json:"weight" validate:"required,gte=0"`
 	CategoryID    string   `json:"category_id" validate:"required"`
 	SubCategoryID *string  `json:"sub_category_id"`
 	BrandID       *string  `json:"brand_id"`
-	Images        []string `json:"images" validate:"required,gte=1"`
+	Images        []string `json:"images" `
 }
 
 type UpdateProductRequest struct {
@@ -35,8 +35,21 @@ type UpdateProductRequest struct {
 	Description   string  `json:"description" validate:"required"`
 	Stock         int     `json:"stock" validate:"required,gte=0"`
 	Price         int     `json:"price" validate:"required,gte=0"`
-	Weight        int     `json:"weight" validate:"required,gte=0"`
+	Weight        float64 `json:"weight" validate:"required,gte=0"`
 	CategoryID    string  `json:"category_id" validate:"required"`
 	SubCategoryID *string `json:"sub_category_id"`
 	BrandID       *string `json:"brand_id"`
+}
+
+type AddToCartRequest struct {
+	ProductID string `json:"product_id" validate:"required"`
+	Quantity  int    `json:"quantity" validate:"required,gte=1"`
+}
+
+type UpdateCartRequest struct {
+	Quantity int `json:"quantity" validate:"required,gte=1"`
+}
+
+type RemoveFromCartRequest struct {
+	CartItemsID []string `json:"cart_items_id" validate:"required,gte=1"`
 }

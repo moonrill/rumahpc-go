@@ -39,6 +39,11 @@ func InitDatabase() {
 		&models.Address{},
 		&models.Product{},
 		&models.ProductImages{},
+		&models.Order{},
+		&models.OrderItem{},
+		&models.Payment{},
+		&models.Cart{},
+		&models.CartItem{},
 	)
 
 	if err != nil {

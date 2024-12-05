@@ -16,8 +16,8 @@ type Product struct {
 	Description   string         `gorm:"type:text" validate:"required" json:"description"`
 	Price         int            `gorm:"type:integer;not null" validate:"required,gte=0" json:"price"`
 	Stock         int            `gorm:"type:integer;not null" validate:"required,gte=0" json:"stock"`
-	Weight        int            `gorm:"type:integer;not null" validate:"required,gte=0" json:"weight"`
-	Status        Status         `gorm:"type:varchar(255);default:'active';not null" json:"status"`
+	Weight        float64        `gorm:"type:float;not null" validate:"required,gte=0" json:"weight"`
+	Status        ProductStatus  `gorm:"type:varchar(255);default:'active';not null" json:"status"`
 	CreatedAt     time.Time      `json:"created_at"`
 	UpdatedAt     time.Time      `json:"updated_at"`
 	DeletedAt     gorm.DeletedAt `gorm:"index" json:"deleted_at"`
@@ -32,11 +32,11 @@ type Product struct {
 	Images        *[]string      `json:"images" gorm:"-"`
 }
 
-type Status string
+type ProductStatus string
 
 const (
-	Active   Status = "active"
-	Inactive Status = "inactive"
+	ProductStatusActive   ProductStatus = "active"
+	ProductStatusInactive ProductStatus = "inactive"
 )
 
 func (p *Product) BeforeCreate(tx *gorm.DB) (err error) {

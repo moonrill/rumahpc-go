@@ -83,6 +83,16 @@ func SetupRoutes(router *gin.Engine) {
 				merchant.PUT("/products/:id", controllers.UpdateProduct)
 			}
 
+			customer := protected.Group("/")
+			customer.Use(middleware.RoleMiddleware("customer"))
+			{
+				customer.GET("/carts", controllers.GetCart)
+				customer.POST("/carts", controllers.AddToCart)
+				customer.PUT("/carts/:id", controllers.UpdateCart)
+				customer.DELETE("/carts", controllers.RemoveFromCart)
+
+			}
+
 			customerMerchant := protected.Group("/")
 			customerMerchant.Use(middleware.RoleMiddleware("customer", "merchant"))
 			{

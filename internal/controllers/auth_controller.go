@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/moonrill/rumahpc-api/config"
 	"github.com/moonrill/rumahpc-api/internal/models"
 	"github.com/moonrill/rumahpc-api/internal/services"
 	"github.com/moonrill/rumahpc-api/types"
@@ -47,6 +48,19 @@ func SignUp(c *gin.Context) {
 	}
 
 	err = services.CreateUser(&user)
+
+	// Create Cart for Customer
+	if role.Name == "customer" {
+		cart := models.Cart{
+			UserID: user.ID,
+		}
+		err = config.DB.Create(&cart).Error
+
+		if err != nil {
+			utils.ErrorResponse(c, http.StatusInternalServerError, "Error create cart", err.Error())
+			return
+		}
+	}
 
 	if err != nil {
 		if err == utils.ErrAlreadyExists {
