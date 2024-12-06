@@ -95,6 +95,9 @@ func SetupRoutes(router *gin.Engine) {
 				customer.GET("/shipping/rates/cart", controllers.GetCartCouriersRates)
 				customer.GET("/shipping/rates/buy-now", controllers.GetBuyNowCouriersRates)
 
+				customer.POST("/orders/buy-now", controllers.CreateBuyNowOrder)
+				customer.POST("/orders/cart", controllers.CreateCartOrder)
+
 			}
 
 			customerMerchant := protected.Group("/")

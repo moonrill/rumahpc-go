@@ -82,9 +82,44 @@ type CartCouriersRatesRequest struct {
 }
 
 type BiteshipItem struct {
+	ID          string  `json:"id"`
 	Name        string  `json:"name"`
 	Description string  `json:"description"`
 	Value       int     `json:"value"`
 	Quantity    int     `json:"quantity"`
 	Weight      float64 `json:"weight"`
+}
+
+type ShippingOrderRequest struct {
+	OriginContactName       string         `json:"origin_contact_name" validate:"required"`
+	OriginContactPhone      string         `json:"origin_contact_phone" validate:"required"`
+	OriginAddress           string         `json:"origin_address" validate:"required"`
+	OriginNote              string         `json:"origin_note"`
+	OriginPostalCode        string         `json:"origin_postal_code" validate:"required"`
+	DestinationContactName  string         `json:"destination_contact_name" validate:"required"`
+	DestinationContactPhone string         `json:"destination_contact_phone" validate:"required"`
+	DestinationContactEmail string         `json:"destination_contact_email" validate:"required"`
+	DestinationAddress      string         `json:"destination_address" validate:"required"`
+	DestinationPostalCode   string         `json:"destination_postal_code" validate:"required"`
+	DestinationNote         string         `json:"destination_note"`
+	CourierCompany          string         `json:"courier_company" validate:"required"`
+	CourierType             string         `json:"courier_type" validate:"required"`
+	DeliveryType            string         `json:"delivery_type" validate:"required"`
+	Items                   []BiteshipItem `json:"items" validate:"required"`
+}
+
+type ShippingOrderSuccessResponse struct {
+	ShippingOrderID string `json:"shipping_order_id"`
+	TrackingID      string `json:"tracking_id"`
+	WaybillID       string `json:"waybill_id"`
+	ShippingStatus  string `json:"shipping_status"`
+	ShippingPrice   int    `json:"shipping_price"`
+}
+
+type BuyNowRequest struct {
+	AddressID      string `json:"address_id" validate:"required"`
+	ProductID      string `json:"product_id" validate:"required"`
+	Quantity       int    `json:"quantity" validate:"required,gte=1"`
+	CourierCompany string `json:"courier_company" validate:"required"`
+	CourierType    string `json:"courier_type" validate:"required"`
 }

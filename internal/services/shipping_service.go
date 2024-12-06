@@ -3,6 +3,7 @@ package services
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -116,8 +117,8 @@ func GetBuyNowCouriersRates(request *types.BuyNowCouriersRatesRequest) (*map[str
 
 	// Get Couriers Rates
 	return GetCouriersRates(&types.CourierRatesRequest{
-		OriginPostalCode:      userAddress.ZipCode,
-		DestinationPostalCode: merchantAddress.ZipCode,
+		OriginPostalCode:      merchantAddress.ZipCode,
+		DestinationPostalCode: userAddress.ZipCode,
 		Items:                 items,
 	})
 }
@@ -173,4 +174,78 @@ func GetCartCouriersRates(request *types.CartCouriersRatesRequest) (*map[string]
 		DestinationPostalCode: merchantAddress.ZipCode,
 		Items:                 items,
 	})
+}
+
+func CreateShippingOrder(request *types.ShippingOrderRequest) (*types.ShippingOrderSuccessResponse, error) {
+	url := os.Getenv("BITESHIP_API_URL") + "/orders"
+
+	body := map[string]interface{}{
+		"origin_contact_name":       request.OriginContactName,
+		"origin_contact_phone":      request.OriginContactPhone,
+		"origin_address":            request.OriginAddress,
+		"origin_note":               request.OriginNote,
+		"origin_postal_code":        request.OriginPostalCode,
+		"destination_contact_name":  request.DestinationContactName,
+		"destination_contact_phone": request.DestinationContactPhone,
+		"destination_contact_email": request.DestinationContactEmail,
+		"destination_address":       request.DestinationAddress,
+		"destination_postal_code":   request.DestinationPostalCode,
+		"destination_note":          request.DestinationNote,
+		"courier_company":           request.CourierCompany,
+		"courier_type":              request.CourierType,
+		"delivery_type":             request.DeliveryType,
+		"items":                     request.Items,
+	}
+
+	jsonData, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return nil, err
+	}
+
+	utils.SetBiteshipHeaders(req)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("error creating shipping order: %s", resp.Status)
+	}
+
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Error reading response body:", err)
+		return nil, err
+	}
+
+	var result map[string]interface{}
+	err = json.Unmarshal(bodyBytes, &result)
+
+	if err != nil {
+		return nil, err
+	}
+
+	courier, ok := result["courier"].(map[string]interface{})
+	if !ok {
+		// handle the case when "courier" is not a map
+		return nil, errors.New("invalid courier data")
+	}
+
+	response := &types.ShippingOrderSuccessResponse{
+		ShippingOrderID: result["id"].(string),
+		TrackingID:      courier["tracking_id"].(string),
+		WaybillID:       courier["waybill_id"].(string),
+		ShippingStatus:  result["status"].(string),
+		ShippingPrice:   int(result["price"].(float64)),
+	}
+
+	return response, nil
 }
