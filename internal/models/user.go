@@ -19,7 +19,7 @@ type User struct {
 	DeletedAt   gorm.DeletedAt `gorm:"index" json:"deleted_at"`
 	RoleID      string         `gorm:"type:uuid;not null" json:"role_id"`
 	Role        Role           `json:"role" gorm:"foreignKey:RoleID"`
-	Addresses   []Address      `json:"addresses" gorm:"foreignKey:UserID"`
+	Addresses   *[]Address     `json:"addresses" gorm:"foreignKey:UserID"`
 	Products    *[]Product     `json:"products,omitempty" gorm:"foreignKey:MerchantID"`
 	Orders      *[]Order       `json:"orders" gorm:"foreignKey:UserID"`
 	Payments    *[]Payment     `json:"payments" gorm:"foreignKey:UserID"`

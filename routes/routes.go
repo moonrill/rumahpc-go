@@ -87,9 +87,12 @@ func SetupRoutes(router *gin.Engine) {
 			customer.Use(middleware.RoleMiddleware("customer"))
 			{
 				customer.GET("/carts", controllers.GetCart)
+				customer.GET("/carts/grouped", controllers.GetGroupedCart)
 				customer.POST("/carts", controllers.AddToCart)
 				customer.PUT("/carts/:id", controllers.UpdateCart)
 				customer.DELETE("/carts", controllers.RemoveFromCart)
+
+				customer.GET("/shipping/rates/buy-now", controllers.GetBuyNowCouriersRates)
 
 			}
 

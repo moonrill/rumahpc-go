@@ -1,6 +1,9 @@
 package types
 
-import "github.com/golang-jwt/jwt/v5"
+import (
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/moonrill/rumahpc-api/internal/models"
+)
 
 type SignUpRequest struct {
 	Name        string `json:"name" validate:"required,max=255"`
@@ -41,6 +44,12 @@ type UpdateProductRequest struct {
 	BrandID       *string `json:"brand_id"`
 }
 
+type GroupedCartItem struct {
+	MerchantID   string            `json:"merchant_id"`
+	MerchantName string            `json:"merchant_name"`
+	CartItems    []models.CartItem `json:"cart_items"`
+}
+
 type AddToCartRequest struct {
 	ProductID string `json:"product_id" validate:"required"`
 	Quantity  int    `json:"quantity" validate:"required,gte=1"`
@@ -52,4 +61,24 @@ type UpdateCartRequest struct {
 
 type RemoveFromCartRequest struct {
 	CartItemsID []string `json:"cart_items_id" validate:"required,gte=1"`
+}
+
+type CourierRatesRequest struct {
+	OriginPostalCode      string         `json:"origin_postal_code" validate:"required"`
+	DestinationPostalCode string         `json:"destination_postal_code" validate:"required"`
+	Items                 []BiteshipItem `json:"items" validate:"required"`
+}
+
+type BuyNowCouriersRatesRequest struct {
+	AddressID string `json:"address_id" validate:"required"`
+	ProductID string `json:"product_id" validate:"required"`
+	Quantity  int    `json:"quantity" validate:"required,gte=1"`
+}
+
+type BiteshipItem struct {
+	Name        string  `json:"name"`
+	Description string  `json:"description"`
+	Value       int     `json:"value"`
+	Quantity    int     `json:"quantity"`
+	Weight      float64 `json:"weight"`
 }

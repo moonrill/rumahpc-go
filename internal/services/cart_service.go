@@ -8,6 +8,51 @@ import (
 	"gorm.io/gorm"
 )
 
+func GetGroupedCart(userID string) ([]types.GroupedCartItem, error) {
+	var cart models.Cart
+
+	// Preload CartItems, Product, and Merchant (User)
+	err := config.DB.
+		Where("user_id = ?", userID).
+		Preload("CartItems.Product.Merchant").
+		First(&cart).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Map untuk mengelompokkan CartItem berdasarkan MerchantID
+	groupedItems := make(map[string]*types.GroupedCartItem)
+
+	// Iterasi setiap CartItem
+	for _, item := range cart.CartItems {
+		if item.Product != nil && item.Product.Merchant != nil {
+			merchantID := item.Product.Merchant.ID
+			merchantName := item.Product.Merchant.Name
+
+			// Jika belum ada entry untuk MerchantID ini, buat entry baru
+			if _, exists := groupedItems[merchantID]; !exists {
+				groupedItems[merchantID] = &types.GroupedCartItem{
+					MerchantID:   merchantID,
+					MerchantName: merchantName,
+					CartItems:    []models.CartItem{},
+				}
+			}
+
+			// Tambahkan CartItem ke grup merchant
+			groupedItems[merchantID].CartItems = append(groupedItems[merchantID].CartItems, item)
+		}
+	}
+
+	// Ubah map menjadi slice untuk hasil
+	var result []types.GroupedCartItem
+	for _, group := range groupedItems {
+		result = append(result, *group)
+	}
+
+	return result, nil
+}
+
 func GetCart(userID string) ([]models.CartItem, error) {
 	var cart models.Cart
 

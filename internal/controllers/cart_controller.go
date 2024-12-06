@@ -34,6 +34,19 @@ func AddToCart(c *gin.Context) {
 	utils.SuccessResponse(c, http.StatusOK, "Success add to cart", item)
 }
 
+func GetGroupedCart(c *gin.Context) {
+	user := c.MustGet("user").(models.User)
+
+	cart, err := services.GetGroupedCart(user.ID)
+
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Error get cart")
+		return
+	}
+
+	utils.SuccessResponse(c, http.StatusOK, "Success get cart", cart)
+}
+
 func GetCart(c *gin.Context) {
 	user := c.MustGet("user").(models.User)
 
