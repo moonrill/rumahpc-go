@@ -21,7 +21,7 @@ func GetCouriersRates(data *types.CourierRatesRequest) (*map[string]interface{},
 	body := map[string]interface{}{
 		"origin_postal_code":      data.OriginPostalCode,
 		"destination_postal_code": data.DestinationPostalCode,
-		"couriers":                "gojek,jnt,jne,sicepat,anteraja",
+		"couriers":                "gojek,jnt,jne,sicepat,anteraja,paxel,tiki",
 		"items":                   data.Items,
 	}
 
@@ -112,6 +112,59 @@ func GetBuyNowCouriersRates(request *types.BuyNowCouriersRatesRequest) (*map[str
 			return nil, utils.ErrNotFound
 		}
 		return nil, err
+	}
+
+	// Get Couriers Rates
+	return GetCouriersRates(&types.CourierRatesRequest{
+		OriginPostalCode:      userAddress.ZipCode,
+		DestinationPostalCode: merchantAddress.ZipCode,
+		Items:                 items,
+	})
+}
+
+func GetCartCouriersRates(request *types.CartCouriersRatesRequest) (*map[string]interface{}, error) {
+	// Get User Address
+	var userAddress models.Address
+
+	err := config.DB.First(&userAddress, "id = ?", request.AddressID).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, utils.ErrNotFound
+		}
+		return nil, err
+	}
+
+	var merchantAddress models.Address
+
+	err = config.DB.First(&merchantAddress, "user_id = ?", request.MerchantID).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, utils.ErrNotFound
+		}
+		return nil, err
+	}
+
+	// Convert Cart Items to Biteship Items
+	var items []types.BiteshipItem
+
+	for _, cartItemID := range request.CartItems {
+		var cartItem models.CartItem
+		err = config.DB.Preload("Product").First(&cartItem, "id = ?", cartItemID).Error
+
+		if err != nil {
+			if err == gorm.ErrRecordNotFound {
+				return nil, utils.ErrNotFound
+			}
+			return nil, err
+		}
+
+		items = append(items, types.BiteshipItem{
+			Name:        cartItem.Product.Name,
+			Description: cartItem.Product.Description,
+			Value:       cartItem.Product.Price,
+			Quantity:    cartItem.Quantity,
+			Weight:      cartItem.Product.Weight * 1000, // Convert to grams
+		})
 	}
 
 	// Get Couriers Rates

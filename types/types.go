@@ -75,6 +75,12 @@ type BuyNowCouriersRatesRequest struct {
 	Quantity  int    `json:"quantity" validate:"required,gte=1"`
 }
 
+type CartCouriersRatesRequest struct {
+	AddressID  string   `json:"address_id" validate:"required"`
+	MerchantID string   `json:"merchant_id" validate:"required"`
+	CartItems  []string `json:"cart_items" validate:"required,gte=1"`
+}
+
 type BiteshipItem struct {
 	Name        string  `json:"name"`
 	Description string  `json:"description"`

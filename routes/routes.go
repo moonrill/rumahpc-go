@@ -92,6 +92,7 @@ func SetupRoutes(router *gin.Engine) {
 				customer.PUT("/carts/:id", controllers.UpdateCart)
 				customer.DELETE("/carts", controllers.RemoveFromCart)
 
+				customer.GET("/shipping/rates/cart", controllers.GetCartCouriersRates)
 				customer.GET("/shipping/rates/buy-now", controllers.GetBuyNowCouriersRates)
 
 			}

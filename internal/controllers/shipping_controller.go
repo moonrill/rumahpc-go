@@ -29,3 +29,24 @@ func GetBuyNowCouriersRates(c *gin.Context) {
 
 	utils.SuccessResponse(c, http.StatusOK, "Success get couriers rates", data)
 }
+
+func GetCartCouriersRates(c *gin.Context) {
+	var requestBody types.CartCouriersRatesRequest
+
+	if !utils.ValidateRequest(c, &requestBody) {
+		return
+	}
+
+	data, err := services.GetCartCouriersRates(&requestBody)
+
+	if err != nil {
+		if err == utils.ErrNotFound {
+			utils.ErrorResponse(c, http.StatusNotFound, "Address not found")
+			return
+		}
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Error get couriers rates")
+		return
+	}
+
+	utils.SuccessResponse(c, http.StatusOK, "Success get couriers rates", data)
+}
