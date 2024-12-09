@@ -48,6 +48,11 @@ func SetupRoutes(router *gin.Engine) {
 			product.GET("/:slug", controllers.GetProduct)
 		}
 
+		xendit := v1.Group("/xendit")
+		{
+			xendit.POST("/callback", controllers.XenditCallback)
+		}
+
 		// Protected routes
 		protected := v1.Group("/")
 		protected.Use(middleware.HeaderAuthMiddleware)
@@ -92,11 +97,11 @@ func SetupRoutes(router *gin.Engine) {
 				customer.PUT("/carts/:id", controllers.UpdateCart)
 				customer.DELETE("/carts", controllers.RemoveFromCart)
 
-				customer.GET("/shipping/rates/cart", controllers.GetCartCouriersRates)
-				customer.GET("/shipping/rates/buy-now", controllers.GetBuyNowCouriersRates)
+				customer.POST("/shipping/rates/cart", controllers.GetCartCouriersRates)
+				customer.POST("/shipping/rates/buy-now", controllers.GetBuyNowCouriersRates)
 
-				customer.POST("/orders/buy-now", controllers.CreateBuyNowOrder)
-				customer.POST("/orders/cart", controllers.CreateCartOrder)
+				customer.POST("/orders/buy-now", controllers.BuyNowOrder)
+				customer.POST("/orders/checkout", controllers.CheckoutCart)
 
 			}
 

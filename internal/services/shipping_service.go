@@ -249,3 +249,8 @@ func CreateShippingOrder(request *types.ShippingOrderRequest) (*types.ShippingOr
 
 	return response, nil
 }
+
+func ConvertAddressToString(address *models.Address) string {
+	combined := address.Province + ", " + address.City + ", " + address.District + ", " + address.Village + ", " + address.Address
+	return combined
+}

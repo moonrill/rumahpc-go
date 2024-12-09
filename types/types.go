@@ -122,4 +122,18 @@ type BuyNowRequest struct {
 	Quantity       int    `json:"quantity" validate:"required,gte=1"`
 	CourierCompany string `json:"courier_company" validate:"required"`
 	CourierType    string `json:"courier_type" validate:"required"`
+	ShippingPrice  int    `json:"shipping_price" validate:"required,gte=0"`
+}
+
+type ShippingOption struct {
+	MerchantID     string `json:"merchant_id" validate:"required"`
+	CourierCompany string `json:"courier_company" validate:"required"`
+	CourierType    string `json:"courier_type" validate:"required"`
+	Price          int    `json:"price" validate:"required,gte=0"`
+}
+
+type CheckoutCartRequest struct {
+	AddressID       string           `json:"address_id" validate:"required"`
+	CartItems       []string         `json:"cart_items" validate:"required,gte=1"`
+	ShippingOptions []ShippingOption `json:"shipping_options" validate:"required,gte=1"`
 }

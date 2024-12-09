@@ -25,7 +25,8 @@ type Order struct {
 	UpdatedAt      time.Time      `json:"updated_at"`
 	DeletedAt      gorm.DeletedAt `gorm:"index" json:"deleted_at"`
 	OrderItems     []OrderItem    `json:"order_items" gorm:"foreignKey:OrderID"`
-	Payment        *Payment       `json:"payment" gorm:"foreignKey:OrderID"`
+	PaymentID      *string        `gorm:"type:uuid" json:"payment_id"`
+	Payment        *Payment       `json:"payment" gorm:"foreignKey:PaymentID"`
 }
 
 type OrderStatus string

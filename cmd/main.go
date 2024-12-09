@@ -29,6 +29,9 @@ func main() {
 	// Load seeders
 	// seeders.RunSeeders()
 
+	// Init Xendit
+	config.InitXendit()
+
 	// Get Port
 	port := os.Getenv("PORT")
 	if port == "" {
