@@ -104,19 +104,13 @@ func CreateCartCheckoutXenditInvoice(orders []*models.Order, orderItems []*model
 	externalId := utils.GenerateShortExternalID()
 
 	var invoiceItems []invoice.InvoiceItem
-	var invoiceFees []invoice.InvoiceFee
+	var shippingTotal int
 
 	var user *models.User
 
-	for index, order := range orders {
-		invoiceFees = append(invoiceFees, invoice.InvoiceFee{
-			Type:  fmt.Sprintf("Shipping Fee - Order #%d", index+1),
-			Value: float32(*order.ShippingPrice),
-		})
-
-		if user == nil {
-			user = order.User
-		}
+	for _, order := range orders {
+		user = order.User
+		shippingTotal += *order.ShippingPrice
 	}
 
 	for _, item := range orderItems {
@@ -155,7 +149,12 @@ func CreateCartCheckoutXenditInvoice(orders []*models.Order, orderItems []*model
 			MobileNumber: *invoice.NewNullableString(&user.PhoneNumber),
 		},
 		Items: invoiceItems,
-		Fees:  invoiceFees,
+		Fees: []invoice.InvoiceFee{
+			{
+				Type:  "Shipping Fee",
+				Value: float32(shippingTotal),
+			},
+		},
 	}
 
 	inv, r, xerr := config.XenditClient.InvoiceApi.CreateInvoice(context.Background()).
