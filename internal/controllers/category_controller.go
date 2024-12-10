@@ -10,19 +10,23 @@ import (
 )
 
 func GetCategories(c *gin.Context) {
-	categories, err := services.GetCategories()
+	page, limit := utils.ExtractPaginationParams(c)
+
+	categories, totalItems, err := services.GetCategories(page, limit)
 
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusInternalServerError, "Error get categories")
 		return
 	}
 
-	utils.SuccessResponse(c, http.StatusOK, "Success get categories", categories)
+	totalPages := int((totalItems + int64(limit) - 1) / int64(limit))
+
+	utils.SuccessResponse(c, http.StatusOK, "Success get categories", categories, page, limit, totalItems, totalPages)
 }
 
-func GetCategoryByID(c *gin.Context) {
-	id := c.Param("id")
-	category, err := services.GetCategoryByID(id)
+func GetCategoryBySlug(c *gin.Context) {
+	slug := c.Param("slug")
+	category, err := services.GetCategoryBySlug(slug)
 	if err != nil || category == nil {
 		utils.ErrorResponse(c, http.StatusNotFound, "Category not found")
 		return
@@ -41,7 +45,7 @@ func CreateCategory(c *gin.Context) {
 	err := services.CreateCategory(&category)
 
 	if err != nil {
-		if err == services.ErrCategoryAlreadyExists {
+		if err == utils.ErrAlreadyExists {
 			utils.ErrorResponse(c, http.StatusConflict, "Category name already exists")
 		} else {
 			utils.ErrorResponse(c, http.StatusInternalServerError, "Error create category")
@@ -63,7 +67,7 @@ func UpdateCategory(c *gin.Context) {
 	err := services.UpdateCategory(id, &category)
 
 	if err != nil {
-		if err == services.ErrCategoryNotFound {
+		if err == utils.ErrNotFound {
 			utils.ErrorResponse(c, http.StatusNotFound, "Category not found")
 		} else {
 			utils.ErrorResponse(c, http.StatusInternalServerError, "Error update category")
@@ -78,7 +82,7 @@ func DeleteCategory(c *gin.Context) {
 	id := c.Param("id")
 
 	if err := services.DeleteCategory(id); err != nil {
-		if err == services.ErrCategoryNotFound {
+		if err == utils.ErrNotFound {
 			utils.ErrorResponse(c, http.StatusNotFound, "Category not found")
 		} else {
 			utils.ErrorResponse(c, http.StatusInternalServerError, "Error delete category")
@@ -87,4 +91,26 @@ func DeleteCategory(c *gin.Context) {
 	}
 
 	utils.SuccessResponse(c, http.StatusOK, "Success delete category", nil)
+}
+
+func UploadCategoryIcon(c *gin.Context) {
+	filename, err := utils.UploadImageHandler(c, "uploads/category")
+
+	if err != nil {
+		switch err {
+		case utils.ErrUploadImage:
+			utils.ErrorResponse(c, http.StatusBadRequest, "Failed to upload image")
+		case utils.ErrUploadImageExt:
+			utils.ErrorResponse(c, http.StatusBadRequest, "Image extension not allowed")
+		case utils.ErrUploadImageSize:
+			utils.ErrorResponse(c, http.StatusBadRequest, "Image size too large")
+		case utils.ErrSaveImage:
+			utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to save image")
+		default:
+			utils.ErrorResponse(c, http.StatusInternalServerError, "Error upload category icon")
+		}
+		return
+	}
+
+	utils.SuccessResponse(c, http.StatusOK, "Success upload category icon", filename)
 }

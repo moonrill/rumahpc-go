@@ -26,6 +26,12 @@ func main() {
 	// Load routes
 	routes.SetupRoutes(router)
 
+	// Load seeders
+	// seeders.RunSeeders()
+
+	// Init Xendit
+	config.InitXendit()
+
 	// Get Port
 	port := os.Getenv("PORT")
 	if port == "" {

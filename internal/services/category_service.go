@@ -1,32 +1,40 @@
 package services
 
 import (
-	"errors"
-
 	"github.com/moonrill/rumahpc-api/config"
 	"github.com/moonrill/rumahpc-api/internal/models"
+	"github.com/moonrill/rumahpc-api/utils"
 	"gorm.io/gorm"
 )
 
-var ErrCategoryAlreadyExists = errors.New("category name already exists")
-var ErrCategoryNotFound = errors.New("category not found")
-
-func GetCategories() ([]models.Category, error) {
+func GetCategories(page, limit int) ([]models.Category, int64, error) {
 	var categories []models.Category
-	err := config.DB.Preload("SubCategories").Find(&categories).Error
+	var totalCount int64
 
-	return categories, err
+	offset := (page - 1) * limit
+
+	if err := config.DB.Model(&models.Category{}).Count(&totalCount).Error; err != nil {
+		return nil, 0, err
+	}
+
+	result := config.DB.Preload("SubCategories").Offset(offset).Limit(limit).Find(&categories)
+
+	if result.Error != nil {
+		return nil, 0, result.Error
+	}
+
+	return categories, totalCount, nil
 }
 
-func GetCategoryByID(id string) (*models.Category, error) {
+func GetCategoryBySlug(slug string) (*models.Category, error) {
 	var category models.Category
-	err := config.DB.Preload("SubCategories").First(&category, "id = ?", id).Error
+	err := config.DB.Preload("SubCategories").First(&category, "slug = ?", slug).Error
 
 	if err == gorm.ErrRecordNotFound {
 		return nil, nil
 	}
 
-	return &category, err
+	return &category, nil
 }
 
 func CreateCategory(category *models.Category) error {
@@ -34,7 +42,7 @@ func CreateCategory(category *models.Category) error {
 	err := config.DB.First(&existingCategory, "name = ?", category.Name).Error
 
 	if err == nil {
-		return ErrCategoryAlreadyExists
+		return utils.ErrAlreadyExists
 	}
 
 	return config.DB.Create(category).Error
@@ -45,7 +53,7 @@ func UpdateCategory(id string, category *models.Category) error {
 	err := config.DB.First(&existingCategory, "id = ?", id).Error
 
 	if err == gorm.ErrRecordNotFound {
-		return ErrCategoryNotFound
+		return utils.ErrNotFound
 	}
 
 	existingCategory.Name = category.Name
@@ -69,7 +77,7 @@ func DeleteCategory(id string) error {
 	err := config.DB.First(&category, "id = ?", id).Error
 
 	if err == gorm.ErrRecordNotFound {
-		return ErrCategoryNotFound
+		return utils.ErrNotFound
 	}
 
 	return config.DB.Delete(&category).Error
