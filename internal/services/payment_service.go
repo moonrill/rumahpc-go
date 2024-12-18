@@ -9,6 +9,7 @@ import (
 
 	"github.com/moonrill/rumahpc-api/config"
 	"github.com/moonrill/rumahpc-api/internal/models"
+	"github.com/moonrill/rumahpc-api/types"
 	"github.com/moonrill/rumahpc-api/utils"
 	"github.com/xendit/xendit-go/v6/invoice"
 )
@@ -98,7 +99,7 @@ func CreateCartCheckoutXenditInvoice(orders []*models.Order, orderItems []*model
 	// Calculate total price accross all orders
 	var totalPrice int
 	for _, order := range orders {
-		totalPrice += order.TotalPrice
+		totalPrice += order.TotalPrice + *order.ShippingPrice
 	}
 
 	externalId := utils.GenerateShortExternalID()
@@ -199,4 +200,111 @@ func CreateCartCheckoutXenditInvoice(orders []*models.Order, orderItems []*model
 	}
 
 	return inv, nil
+}
+
+func HandleXenditCallback(callback *invoice.InvoiceCallback) error {
+	// Get External ID
+	externalId := callback.GetExternalId()
+
+	// Search payment by external ID
+	var payment models.Payment
+	err := config.DB.First(&payment, "external_id = ?", externalId).Error
+
+	if err != nil {
+		return err
+	}
+
+	// Update payment
+	if callback.GetStatus() == "PAID" {
+		payment.Status = models.PaymentPaid
+		payment.PaymentDate = callback.GetPaidAt()
+		payment.PaymentMethod = callback.GetPaymentChannel()
+	} else {
+		payment.Status = models.PaymentExpired
+	}
+
+	err = config.DB.Save(&payment).Error
+	if err != nil {
+		return err
+	}
+
+	// Create Shipping Orders
+	if payment.Status == models.PaymentPaid {
+		var orders []models.Order
+		err := config.DB.Preload("Merchant").Preload("User").Preload("Address").Where("payment_id = ?", payment.ID).Find(&orders).Error
+
+		if err != nil {
+			return err
+		}
+
+		for _, order := range orders {
+			var biteShipItems []types.BiteshipItem
+			var orderItems []models.OrderItem
+			err := config.DB.Preload("Product").Where("order_id = ?", order.ID).Find(&orderItems).Error
+			if err != nil {
+				return err
+			}
+
+			// Get order items
+			for _, item := range orderItems {
+				var product models.Product
+				err := config.DB.First(&product, "id = ?", item.ProductID).Error
+				if err != nil {
+					return err
+				}
+
+				// Append to biteShipItems
+				biteShipItems = append(biteShipItems, types.BiteshipItem{
+					Name:        product.Name,
+					Description: product.Description,
+					Value:       product.Price,
+					Quantity:    item.Quantity,
+					Weight:      product.Weight * 1000,
+				})
+			}
+
+			// Get Merchant Address
+			var merchantAddress models.Address
+			err = config.DB.First(&merchantAddress, "user_id = ?", order.MerchantID).Error
+			if err != nil {
+				return err
+			}
+
+			// Create shipping order
+			response, err := CreateShippingOrder(&types.ShippingOrderRequest{
+				OriginContactName:       order.Merchant.Name,
+				OriginContactPhone:      order.Merchant.PhoneNumber,
+				OriginAddress:           ConvertAddressToString(&merchantAddress),
+				OriginNote:              *order.Address.Note,
+				OriginPostalCode:        merchantAddress.ZipCode,
+				DestinationContactName:  order.User.Name,
+				DestinationContactEmail: order.User.Email,
+				DestinationContactPhone: order.User.PhoneNumber,
+				DestinationAddress:      ConvertAddressToString(order.Address),
+				DestinationNote:         *order.Address.Note,
+				DestinationPostalCode:   order.Address.ZipCode,
+				Items:                   biteShipItems,
+				CourierCompany:          *order.CourierCompany,
+				CourierType:             *order.CourierType,
+				DeliveryType:            "now",
+			})
+
+			if err != nil {
+				return err
+			}
+
+			// Update order
+			order.Status = models.OrderStatusProcessing
+			order.ShippingStatus = models.ShippingStatusConfirmed
+			order.TrackingID = &response.TrackingID
+			order.WaybillID = &response.WaybillID
+			order.ShippingID = &response.ShippingOrderID
+			err = config.DB.Save(&order).Error
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }

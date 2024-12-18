@@ -13,7 +13,7 @@ type Payment struct {
 	User          User           `json:"user" gorm:"foreignKey:UserID"`
 	Amount        int            `gorm:"type:integer;not null" json:"amount"`
 	PaymentMethod string         `gorm:"type:varchar(255);" json:"payment_method"`
-	PaymentDate   time.Time      `json:"payment_date"`
+	PaymentDate   string         `json:"payment_date"`
 	Status        PaymentStatus  `gorm:"type:varchar(255);not null;default:'pending'" json:"status"`
 	Orders        []Order        `json:"orders" gorm:"foreignKey:PaymentID"`
 	CreatedAt     time.Time      `json:"created_at"`
@@ -28,4 +28,5 @@ const (
 	PaymentPaid    PaymentStatus = "paid"
 	PaymentFailed  PaymentStatus = "failed"
 	PaymentRefund  PaymentStatus = "refund"
+	PaymentExpired PaymentStatus = "expired"
 )

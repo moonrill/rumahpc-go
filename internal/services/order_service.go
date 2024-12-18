@@ -67,10 +67,11 @@ func CreateBuyNowOrder(request *types.BuyNowRequest, userID string) (*invoice.In
 		AddressID:      request.AddressID,
 		Status:         models.OrderStatusWaiting,
 		ShippingPrice:  &request.ShippingPrice,
-		TotalPrice:     totalPrice + request.ShippingPrice,
+		TotalPrice:     totalPrice,
 		CourierCompany: &request.CourierCompany,
 		CourierType:    &request.CourierType,
 		User:           &user,
+		MerchantID:     product.MerchantID,
 	}
 
 	err = config.DB.Create(order).Error
@@ -191,10 +192,11 @@ func CreateCartCheckoutOrder(request *types.CheckoutCartRequest, user *models.Us
 			AddressID:      request.AddressID,
 			Status:         models.OrderStatusWaiting,
 			ShippingPrice:  &shippingOption.Price,
-			TotalPrice:     merchantOrderTotal + shippingOption.Price,
+			TotalPrice:     merchantOrderTotal,
 			CourierCompany: &shippingOption.CourierCompany,
 			CourierType:    &shippingOption.CourierType,
 			User:           user,
+			MerchantID:     merchantID,
 		}
 
 		totalOrderPrice += order.TotalPrice
