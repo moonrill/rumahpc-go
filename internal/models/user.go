@@ -18,7 +18,7 @@ type User struct {
 	UpdatedAt   time.Time      `json:"updated_at"`
 	DeletedAt   gorm.DeletedAt `gorm:"index" json:"deleted_at"`
 	RoleID      string         `gorm:"type:uuid;not null" json:"role_id"`
-	Role        Role           `json:"role" gorm:"foreignKey:RoleID"`
+	Role        *Role          `json:"role" gorm:"foreignKey:RoleID"`
 	Addresses   *[]Address     `json:"addresses" gorm:"foreignKey:UserID"`
 	Products    *[]Product     `json:"products,omitempty" gorm:"foreignKey:MerchantID"`
 	Orders      *[]Order       `json:"orders" gorm:"foreignKey:UserID"`

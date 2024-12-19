@@ -100,8 +100,10 @@ func SetupRoutes(router *gin.Engine) {
 				customer.POST("/shipping/rates/cart", controllers.GetCartCouriersRates)
 				customer.POST("/shipping/rates/buy-now", controllers.GetBuyNowCouriersRates)
 
+				customer.GET("/orders", controllers.GetOrders)
+				customer.GET("/orders/:id", controllers.GetOrderById)
+				customer.POST("/orders/cart", controllers.CheckoutCart)
 				customer.POST("/orders/buy-now", controllers.BuyNowOrder)
-				customer.POST("/orders/checkout", controllers.CheckoutCart)
 
 			}
 

@@ -10,7 +10,7 @@ type Payment struct {
 	ID            string         `gorm:"type:uuid;primary_key;default:uuid_generate_v4()" json:"id"`
 	ExternalID    string         `gorm:"type:varchar(255);not null" json:"external_id"`
 	UserID        string         `gorm:"type:uuid;not null" json:"user_id"`
-	User          User           `json:"user" gorm:"foreignKey:UserID"`
+	User          *User          `json:"user" gorm:"foreignKey:UserID"`
 	Amount        int            `gorm:"type:integer;not null" json:"amount"`
 	PaymentMethod string         `gorm:"type:varchar(255);" json:"payment_method"`
 	PaymentDate   string         `json:"payment_date"`

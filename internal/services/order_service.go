@@ -244,3 +244,49 @@ func CreateCartCheckoutOrder(request *types.CheckoutCartRequest, user *models.Us
 
 	return inv, nil
 }
+
+func GetOrders(userID string, page, limit int) ([]*models.Order, int64, error) {
+	var orders []*models.Order
+	var totalCount int64
+
+	offset := (page - 1) * limit
+
+	if err := config.DB.Model(&models.Order{}).Where("user_id = ?", userID).Count(&totalCount).Error; err != nil {
+		return nil, 0, err
+	}
+
+	result := config.DB.
+		Preload("Merchant").
+		Preload("OrderItems.Product").
+		Offset(offset).
+		Limit(limit).
+		Where("user_id = ?", userID).
+		Order("created_at desc").
+		Find(&orders)
+
+	if result.Error != nil {
+		return nil, 0, result.Error
+	}
+
+	return orders, totalCount, nil
+}
+
+func GetOrderById(userId, orderId string) (*models.Order, error) {
+	var order models.Order
+	err := config.DB.
+		Preload("Merchant").
+		Preload("OrderItems.Product").
+		Preload("Address").
+		Preload("Payment").
+		First(&order, "user_id = ? AND id = ?", userId, orderId).
+		Error
+
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, utils.ErrNotFound
+		}
+		return nil, err
+	}
+
+	return &order, nil
+}

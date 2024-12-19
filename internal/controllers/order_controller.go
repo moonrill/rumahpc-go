@@ -73,3 +73,38 @@ func CheckoutCart(c *gin.Context) {
 
 	utils.SuccessResponse(c, http.StatusOK, "Success creating order", invoice)
 }
+
+func GetOrders(c *gin.Context) {
+	user := c.MustGet("user").(models.User)
+	page, limit := utils.ExtractPaginationParams(c)
+
+	orders, totalItems, err := services.GetOrders(user.ID, page, limit)
+
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Error get orders")
+		return
+	}
+
+	totalPages := int((totalItems + int64(limit) - 1) / int64(limit))
+
+	utils.SuccessResponse(c, http.StatusOK, "Success get orders", orders, page, limit, totalItems, totalPages)
+}
+
+func GetOrderById(c *gin.Context) {
+	orderID := c.Param("id")
+	user := c.MustGet("user").(models.User)
+
+	order, err := services.GetOrderById(user.ID, orderID)
+
+	if err != nil {
+		if err == utils.ErrNotFound {
+			utils.ErrorResponse(c, http.StatusNotFound, "Order not found")
+		} else {
+			utils.ErrorResponse(c, http.StatusInternalServerError, "Error get order")
+		}
+
+		return
+	}
+
+	utils.SuccessResponse(c, http.StatusOK, "Success get order", order)
+}
