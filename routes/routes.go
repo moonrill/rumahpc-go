@@ -53,6 +53,11 @@ func SetupRoutes(router *gin.Engine) {
 			xendit.POST("/callback", controllers.XenditCallback)
 		}
 
+		biteship := v1.Group("/biteship")
+		{
+			biteship.POST("/callback", controllers.BiteshipCallback)
+		}
+
 		// Protected routes
 		protected := v1.Group("/")
 		protected.Use(middleware.HeaderAuthMiddleware)

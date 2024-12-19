@@ -116,6 +116,22 @@ type ShippingOrderSuccessResponse struct {
 	ShippingPrice   int    `json:"shipping_price"`
 }
 
+type BiteshipStatusCallback struct {
+	Event                    string `json:"event"`
+	CourierTrackingID        string `json:"courier_tracking_id"`
+	CourierWaybillID         string `json:"courier_waybill_id"`
+	CourierCompany           string `json:"courier_company"`
+	CourierType              string `json:"courier_type"`
+	CourierDriverName        string `json:"courier_driver_name"`
+	CourierDriverPhone       string `json:"courier_driver_phone"`
+	CourierDriverPhotoURL    string `json:"courier_driver_photo_url"`
+	CourierDriverPlateNumber string `json:"courier_driver_plate_number"`
+	CourierLink              string `json:"courier_link"`
+	OrderID                  string `json:"order_id"`
+	OrderPrice               int    `json:"order_price"`
+	Status                   string `json:"status"`
+}
+
 type BuyNowRequest struct {
 	AddressID      string `json:"address_id" validate:"required"`
 	ProductID      string `json:"product_id" validate:"required"`

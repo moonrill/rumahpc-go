@@ -254,3 +254,57 @@ func ConvertAddressToString(address *models.Address) string {
 	combined := address.Province + ", " + address.City + ", " + address.District + ", " + address.Village + ", " + address.Address
 	return combined
 }
+
+func HandleBiteshipCallback(request *types.BiteshipStatusCallback) error {
+	var order models.Order
+
+	err := config.DB.First(&order, "shipping_id = ?", request.OrderID).Error
+
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return utils.ErrNotFound
+		}
+		return err
+	}
+
+	switch request.Status {
+	case "confirmed":
+		order.ShippingStatus = "confirmed"
+	case "allocated":
+		order.ShippingStatus = "allocated"
+	case "picking_up":
+		order.ShippingStatus = "picking_up"
+	case "picked":
+		order.ShippingStatus = "picked"
+	case "dropping_off":
+		order.ShippingStatus = "dropping_off"
+		order.Status = models.OrderStatusShipped
+	case "return_in_transit":
+		order.ShippingStatus = "return_in_transit"
+	case "on_hold":
+		order.ShippingStatus = "on_hold"
+	case "delivered":
+		order.ShippingStatus = "delivered"
+		order.Status = models.OrderStatusDelivered
+	case "rejected":
+		order.ShippingStatus = "rejected"
+	case "courier_not_found":
+		order.ShippingStatus = "courier_not_found"
+	case "returned":
+		order.ShippingStatus = "returned"
+	case "cancelled":
+		order.ShippingStatus = "cancelled"
+		order.Status = models.OrderStatusCancelled
+	case "disposed":
+		order.ShippingStatus = "disposed"
+	default:
+		return nil
+	}
+
+	err = config.DB.Save(&order).Error
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
