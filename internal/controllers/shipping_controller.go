@@ -69,7 +69,11 @@ func BiteshipCallback(c *gin.Context) {
 	err := services.HandleBiteshipCallback(&callback)
 
 	if err != nil {
-		utils.ErrorResponse(c, http.StatusBadRequest, err.Error())
+		if err == utils.ErrNotFound {
+			utils.ErrorResponse(c, http.StatusNotFound, "Order not found")
+			return
+		}
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Error get order")
 		return
 	}
 
