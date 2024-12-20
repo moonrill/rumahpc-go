@@ -108,3 +108,24 @@ func GetOrderById(c *gin.Context) {
 
 	utils.SuccessResponse(c, http.StatusOK, "Success get order", order)
 }
+
+func CompleteOrder(c *gin.Context) {
+	orderID := c.Param("id")
+	user := c.MustGet("user").(models.User)
+
+	err := services.CompleteOrder(orderID, user.ID)
+
+	if err != nil {
+		if err == utils.ErrNotFound {
+			utils.ErrorResponse(c, http.StatusNotFound, "Order not found")
+		} else if err == utils.ErrBadRequest {
+			utils.ErrorResponse(c, http.StatusBadRequest, "Invalid order status")
+		} else {
+			utils.ErrorResponse(c, http.StatusInternalServerError, "Error complete order")
+		}
+
+		return
+	}
+
+	utils.SuccessResponse(c, http.StatusOK, "Success complete order", nil)
+}

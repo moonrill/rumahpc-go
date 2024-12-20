@@ -12,6 +12,7 @@ import (
 	"github.com/moonrill/rumahpc-api/types"
 	"github.com/moonrill/rumahpc-api/utils"
 	"github.com/xendit/xendit-go/v6/invoice"
+	"github.com/xendit/xendit-go/v6/payout"
 )
 
 func CreateBuyNowXenditInvoice(order *models.Order, orderItem *models.OrderItem) (*invoice.Invoice, error) {
@@ -306,5 +307,45 @@ func HandleXenditCallback(callback *invoice.InvoiceCallback) error {
 		}
 	}
 
+	return nil
+}
+
+func CreatePayoutOrder(order *models.Order) error {
+	var merchant models.User
+	err := config.DB.First(&merchant, "id = ?", order.MerchantID).Error
+	if err != nil {
+		return utils.ErrNotFound
+	}
+
+	accoutnHolderName := *payout.NewNullableString(merchant.AccountName)
+
+	payoutRequest := *payout.NewCreatePayoutRequest(
+		order.ID,
+		*merchant.PaymentChannel,
+		payout.DigitalPayoutChannelProperties{
+			AccountHolderName: accoutnHolderName,
+			AccountNumber:     *merchant.AccountNumber,
+		},
+		float32(order.TotalPrice),
+		"IDR",
+	)
+
+	res, r, respErr := config.XenditClient.PayoutApi.CreatePayout(context.Background()).
+		IdempotencyKey(utils.GenerateIdempotencyKey()).
+		CreatePayoutRequest(payoutRequest).
+		Execute()
+
+	// Handle API call errors
+	if respErr != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `PayoutApi.CreatePayout``: %v\n", err)
+
+		b, _ := json.Marshal(err)
+		fmt.Fprintf(os.Stderr, "Full Error Struct: %v\n", string(b))
+
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+
+	// Response logging
+	fmt.Fprintf(os.Stdout, "Response from `PayoutApi.CreatePayout`: %v\n", res)
 	return nil
 }

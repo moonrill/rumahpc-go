@@ -40,6 +40,7 @@ const (
 	OrderStatusShipped    OrderStatus = "shipped"
 	OrderStatusDelivered  OrderStatus = "delivered"
 	OrderStatusCancelled  OrderStatus = "cancelled"
+	OrderStatusCompleted  OrderStatus = "completed"
 )
 
 const (

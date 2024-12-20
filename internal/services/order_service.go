@@ -290,3 +290,24 @@ func GetOrderById(userId, orderId string) (*models.Order, error) {
 
 	return &order, nil
 }
+
+func CompleteOrder(orderID string, userID string) error {
+	order, err := GetOrderById(userID, orderID)
+	if err != nil {
+		return err
+	}
+
+	if order.Status != models.OrderStatusDelivered {
+		return utils.ErrBadRequest
+	}
+
+	order.Status = models.OrderStatusCompleted
+
+	// Create Payout
+	err = CreatePayoutOrder(order)
+	if err != nil {
+		return err
+	}
+
+	return config.DB.Save(order).Error
+}

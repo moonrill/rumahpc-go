@@ -109,7 +109,7 @@ func SetupRoutes(router *gin.Engine) {
 				customer.GET("/orders/:id", controllers.GetOrderById)
 				customer.POST("/orders/cart", controllers.CheckoutCart)
 				customer.POST("/orders/buy-now", controllers.BuyNowOrder)
-
+				customer.PATCH("/orders/:id/complete", controllers.CompleteOrder)
 			}
 
 			customerMerchant := protected.Group("/")

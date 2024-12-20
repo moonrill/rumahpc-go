@@ -20,3 +20,15 @@ func GenerateShortExternalID() string {
 	timestamp := time.Now().Unix()
 	return fmt.Sprintf("TX-%d-%s", timestamp, hex.EncodeToString(randomBytes))
 }
+
+func GenerateIdempotencyKey() string {
+	// Generate random bytes for uniqueness
+	randomBytes := make([]byte, 16) // 16 bytes = 32 characters in hex
+	_, err := rand.Read(randomBytes)
+	if err != nil {
+		panic(err) // Handle error as appropriate in production
+	}
+
+	// Format Idempotency Key: IDEM-{random}
+	return fmt.Sprintf("IDEM-%s", hex.EncodeToString(randomBytes))
+}
