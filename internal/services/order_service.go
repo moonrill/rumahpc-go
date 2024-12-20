@@ -245,22 +245,34 @@ func CreateCartCheckoutOrder(request *types.CheckoutCartRequest, user *models.Us
 	return inv, nil
 }
 
-func GetOrders(userID string, page, limit int) ([]*models.Order, int64, error) {
+func GetOrders(userID string, page, limit int, status, shippingStatus string) ([]*models.Order, int64, error) {
 	var orders []*models.Order
 	var totalCount int64
 
 	offset := (page - 1) * limit
 
-	if err := config.DB.Model(&models.Order{}).Where("user_id = ?", userID).Count(&totalCount).Error; err != nil {
+	query := config.DB.Model(&models.Order{}).Where("user_id = ?", userID)
+
+	// Apply filters for status and shippingStatus if provided
+	if status != "" {
+		query = query.Where("status = ?", status)
+	}
+
+	if shippingStatus != "" {
+		query = query.Where("shipping_status = ?", shippingStatus)
+	}
+
+	// Count total records with applied filters
+	if err := query.Count(&totalCount).Error; err != nil {
 		return nil, 0, err
 	}
 
-	result := config.DB.
+	// Fetch orders with applied filters
+	result := query.
 		Preload("Merchant").
 		Preload("OrderItems.Product").
 		Offset(offset).
 		Limit(limit).
-		Where("user_id = ?", userID).
 		Order("created_at desc").
 		Find(&orders)
 

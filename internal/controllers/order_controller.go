@@ -77,8 +77,10 @@ func CheckoutCart(c *gin.Context) {
 func GetOrders(c *gin.Context) {
 	user := c.MustGet("user").(models.User)
 	page, limit := utils.ExtractPaginationParams(c)
+	status := c.Query("status")
+	shippingStatus := c.Query("shipping_status")
 
-	orders, totalItems, err := services.GetOrders(user.ID, page, limit)
+	orders, totalItems, err := services.GetOrders(user.ID, page, limit, status, shippingStatus)
 
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusInternalServerError, "Error get orders")
