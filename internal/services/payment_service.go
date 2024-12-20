@@ -335,11 +335,10 @@ func CreatePayoutOrder(order *models.Order) error {
 		CreatePayoutRequest(payoutRequest).
 		Execute()
 
-	// Handle API call errors
 	if respErr != nil {
-		fmt.Fprintf(os.Stderr, "Error when calling `PayoutApi.CreatePayout``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Error when calling `PayoutApi.CreatePayout``: %v\n", respErr)
 
-		b, _ := json.Marshal(err)
+		b, _ := json.Marshal(respErr.FullError())
 		fmt.Fprintf(os.Stderr, "Full Error Struct: %v\n", string(b))
 
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
