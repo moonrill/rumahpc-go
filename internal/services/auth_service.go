@@ -6,6 +6,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"github.com/moonrill/rumahpc-api/config"
 	"github.com/moonrill/rumahpc-api/internal/models"
 	"github.com/moonrill/rumahpc-api/types"
 	"golang.org/x/crypto/bcrypt"
@@ -49,4 +50,9 @@ func GenerateToken(user *models.User) (string, error) {
 	}
 
 	return tokenString, nil
+}
+
+func CheckEmailExists(email string) bool {
+	var user models.User
+	return config.DB.Where("email = ?", email).First(&user).RowsAffected > 0
 }

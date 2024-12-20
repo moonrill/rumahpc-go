@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/moonrill/rumahpc-api/config"
 	"github.com/moonrill/rumahpc-api/internal/models"
 	"github.com/moonrill/rumahpc-api/internal/services"
@@ -19,6 +20,24 @@ func SignUp(c *gin.Context) {
 		return
 	}
 
+	if request.Role == "merchant" {
+		var errors []string
+		if request.PaymentChannel == "" {
+			errors = append(errors, "Payment channel is required")
+		}
+		if request.AccountNumber == "" {
+			errors = append(errors, "Account number is required")
+		}
+		if request.AccountName == "" {
+			errors = append(errors, "Account name is required")
+		}
+
+		if len(errors) > 0 {
+			utils.ErrorResponse(c, http.StatusBadRequest, "Validation error", errors)
+			return
+		}
+	}
+
 	role, err := services.GetRoleByName(request.Role)
 
 	if err != nil {
@@ -31,6 +50,12 @@ func SignUp(c *gin.Context) {
 		return
 	}
 
+	// Check if email already exists
+	if services.CheckEmailExists(request.Email) {
+		utils.ErrorResponse(c, http.StatusConflict, "Email already used")
+		return
+	}
+
 	hashedPassword, salt, err := services.HashPassword(request.Password)
 
 	if err != nil {
@@ -39,6 +64,7 @@ func SignUp(c *gin.Context) {
 	}
 
 	user := models.User{
+		ID:          uuid.New().String(),
 		Name:        request.Name,
 		Email:       request.Email,
 		Password:    hashedPassword,
