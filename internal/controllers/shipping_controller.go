@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/moonrill/rumahpc-api/internal/models"
 	"github.com/moonrill/rumahpc-api/internal/services"
 	"github.com/moonrill/rumahpc-api/types"
 	"github.com/moonrill/rumahpc-api/utils"
@@ -78,4 +79,25 @@ func BiteshipCallback(c *gin.Context) {
 	}
 
 	utils.SuccessResponse(c, http.StatusOK, "Webhook processed successfully", nil)
+}
+
+func GetShippingTracking(c *gin.Context) {
+	id := c.Param("id")
+	user := c.MustGet("user").(models.User)
+
+	data, err := services.GetShippingTracking(id, user)
+
+	if err != nil {
+		if err == utils.ErrNotFound {
+			utils.ErrorResponse(c, http.StatusNotFound, "Shipping not found")
+			return
+		} else if err == utils.ErrForbidden {
+			utils.ErrorResponse(c, http.StatusForbidden, "Forbidden")
+			return
+		}
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Error get Shipping tracking")
+		return
+	}
+
+	utils.SuccessResponse(c, http.StatusOK, "Success get Shipping tracking", data)
 }

@@ -19,7 +19,7 @@ func CreateUser(user *models.User) error {
 
 func FindUserByEmail(email string) (*models.User, error) {
 	var user models.User
-	err := config.DB.First(&user, "email = ?", email).Error
+	err := config.DB.Preload("Role").First(&user, "email = ?", email).Error
 
 	return &user, err
 }

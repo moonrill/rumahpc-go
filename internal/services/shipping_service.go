@@ -308,3 +308,65 @@ func HandleBiteshipCallback(request *types.BiteshipStatusCallback) error {
 
 	return nil
 }
+
+func GetShippingTracking(id string, user models.User) (*types.TrackingResponse, error) {
+	var order models.Order
+
+	err := config.DB.First(&order, "tracking_id = ?", id).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, utils.ErrNotFound
+		}
+		return nil, err
+	}
+
+	if order.UserID != user.ID && order.MerchantID != user.ID && user.Role.Name != "admin" {
+		return nil, utils.ErrForbidden
+	}
+
+	url := fmt.Sprintf("%s/trackings/%s", os.Getenv("BITESHIP_API_URL"), id)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	utils.SetBiteshipHeaders(req)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("error getting shipping tracking: %s", resp.Status)
+	}
+
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Error reading response body:", err)
+		return nil, err
+	}
+
+	var result map[string]interface{}
+	err = json.Unmarshal(bodyBytes, &result)
+
+	if err != nil {
+		return nil, err
+	}
+
+	response := &types.TrackingResponse{
+		ID:          result["id"].(string),
+		OrderID:     result["order_id"].(string),
+		WaybillID:   result["waybill_id"].(string),
+		Courier:     result["courier"].(map[string]interface{}),
+		Origin:      result["origin"].(map[string]interface{}),
+		Destination: result["destination"].(map[string]interface{}),
+		History:     result["history"].([]interface{}),
+		Status:      result["status"].(string),
+	}
+
+	return response, nil
+}

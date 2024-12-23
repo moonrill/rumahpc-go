@@ -156,3 +156,14 @@ type CheckoutCartRequest struct {
 	CartItems       []string         `json:"cart_items" validate:"required,gte=1"`
 	ShippingOptions []ShippingOption `json:"shipping_options" validate:"required,gte=1"`
 }
+
+type TrackingResponse struct {
+	ID          string                 `json:"id"`
+	OrderID     string                 `json:"order_id"`
+	WaybillID   string                 `json:"waybill_id"`
+	Courier     map[string]interface{} `json:"courier"`
+	Origin      map[string]interface{} `json:"origin"`
+	Destination map[string]interface{} `json:"destination"`
+	History     []interface{}          `json:"history"`
+	Status      string                 `json:"status"`
+}

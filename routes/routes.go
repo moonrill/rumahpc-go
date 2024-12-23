@@ -64,6 +64,11 @@ func SetupRoutes(router *gin.Engine) {
 		{
 			protected.GET("/profile", controllers.GetProfile)
 
+			tracking := protected.Group("/trackings")
+			{
+				tracking.GET("/:id", controllers.GetShippingTracking)
+			}
+
 			admin := protected.Group("/")
 			admin.Use(middleware.RoleMiddleware("admin"))
 			{
