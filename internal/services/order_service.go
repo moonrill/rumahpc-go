@@ -323,3 +323,24 @@ func CompleteOrder(orderID string, userID string) error {
 
 	return config.DB.Save(order).Error
 }
+
+func CancelOrder(orderID string, userID string) error {
+	order, err := GetOrderById(userID, orderID)
+	if err != nil {
+		return err
+	}
+
+	if order.Status != models.OrderStatusProcessing && order.Status != models.OrderStatusShipped {
+		return utils.ErrBadRequest
+	}
+
+	order.Status = models.OrderStatusCancelled
+
+	if err := CancelShipping(*order.ShippingID); err != nil {
+		return err
+	}
+
+	// TODO: Refund Payment
+
+	return config.DB.Save(order).Error
+}

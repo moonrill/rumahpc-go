@@ -370,3 +370,27 @@ func GetShippingTracking(id string, user models.User) (*types.TrackingResponse, 
 
 	return response, nil
 }
+
+func CancelShipping(id string) error {
+	url := fmt.Sprintf("%s/orders/%s", os.Getenv("BITESHIP_API_URL"), id)
+
+	req, err := http.NewRequest("DELETE", url, nil)
+	if err != nil {
+		return err
+	}
+
+	utils.SetBiteshipHeaders(req)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("error canceling shipping: %s", resp.Status)
+	}
+
+	return nil
+}

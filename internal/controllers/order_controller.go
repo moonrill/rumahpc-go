@@ -131,3 +131,26 @@ func CompleteOrder(c *gin.Context) {
 
 	utils.SuccessResponse(c, http.StatusOK, "Success complete order", nil)
 }
+
+func CancelOrder(c *gin.Context) {
+	orderID := c.Param("id")
+	user := c.MustGet("user").(models.User)
+
+	err := services.CancelOrder(orderID, user.ID)
+
+	if err != nil {
+		if err == utils.ErrNotFound {
+			utils.ErrorResponse(c, http.StatusNotFound, "Order not found")
+		} else if err == utils.ErrBadRequest {
+			utils.ErrorResponse(c, http.StatusBadRequest, "Invalid order status")
+		} else if err == utils.ErrForbidden {
+			utils.ErrorResponse(c, http.StatusForbidden, "Forbidden")
+		} else {
+			utils.ErrorResponse(c, http.StatusInternalServerError, "Error cancel order")
+		}
+
+		return
+	}
+
+	utils.SuccessResponse(c, http.StatusOK, "Success cancel order", nil)
+}

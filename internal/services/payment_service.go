@@ -305,6 +305,21 @@ func HandleXenditCallback(callback *invoice.InvoiceCallback) error {
 				return err
 			}
 		}
+	} else if payment.Status == models.PaymentExpired {
+		var orders []models.Order
+		err := config.DB.Preload("Merchant").Preload("User").Preload("Address").Where("payment_id = ?", payment.ID).Find(&orders).Error
+
+		if err != nil {
+			return err
+		}
+
+		for _, order := range orders {
+			order.Status = models.OrderStatusCancelled
+			err = config.DB.Save(&order).Error
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil
