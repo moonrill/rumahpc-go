@@ -44,6 +44,7 @@ func InitDatabase() {
 		&models.Payment{},
 		&models.Cart{},
 		&models.CartItem{},
+		&models.Review{},
 	)
 
 	if err != nil {

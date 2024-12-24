@@ -27,4 +27,5 @@ type User struct {
 	Orders         *[]Order       `json:"orders" gorm:"foreignKey:UserID"`
 	Payments       *[]Payment     `json:"payments" gorm:"foreignKey:UserID"`
 	Cart           *Cart          `json:"cart" gorm:"foreignKey:UserID"`
+	Reviews        *[]Review      `json:"reviews" gorm:"foreignKey:UserID"`
 }

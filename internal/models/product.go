@@ -30,6 +30,9 @@ type Product struct {
 	SubCategory   *SubCategory   `json:"sub_category" gorm:"foreignKey:SubCategoryID"`
 	SubCategoryID *string        `gorm:"type:uuid;" json:"sub_category_id"`
 	Images        *[]string      `json:"images" gorm:"-"`
+	Reviews       *[]Review      `json:"reviews" gorm:"foreignKey:ProductID"`
+	Rating        float64        `json:"rating" gorm:"-"`
+	ReviewCount   int64          `json:"review_count" gorm:"-"`
 }
 
 type ProductStatus string

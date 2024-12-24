@@ -29,6 +29,13 @@ func GetProducts(page, limit int) ([]models.Product, int64, error) {
 			return nil, 0, err
 		}
 		products[i].Images = &imageNames
+
+		rating, reviewCount, err := GetProductRatingAndReview(products[i].ID)
+		if err != nil {
+			return nil, 0, err
+		}
+		products[i].Rating = rating
+		products[i].ReviewCount = reviewCount
 	}
 
 	return products, totalCount, nil
@@ -82,12 +89,26 @@ func GetProductImages(productID string) ([]string, error) {
 
 func GetProductBySlug(slug string) (*models.Product, error) {
 	var product models.Product
-	if err := config.DB.Preload("Brand").Preload("Category").Preload("SubCategory").Where("slug = ?", slug).First(&product).Error; err != nil {
+	if err := config.DB.Preload("Brand").Preload("Category").Preload("SubCategory").Preload("Reviews").Where("slug = ?", slug).First(&product).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, utils.ErrNotFound
 		}
 		return nil, err
 	}
+
+	imageNames, err := GetProductImages(product.ID)
+	if err != nil {
+		return nil, err
+	}
+	product.Images = &imageNames
+
+	rating, reviewCount, err := GetProductRatingAndReview(product.ID)
+	if err != nil {
+		return nil, err
+	}
+	product.Rating = rating
+	product.ReviewCount = reviewCount
+
 	return &product, nil
 }
 
@@ -118,6 +139,13 @@ func GetProductsByCategorySlug(slug string, page, limit int) ([]models.Product, 
 			return nil, 0, err
 		}
 		products[i].Images = &imageNames
+
+		rating, reviewCount, err := GetProductRatingAndReview(products[i].ID)
+		if err != nil {
+			return nil, 0, err
+		}
+		products[i].Rating = rating
+		products[i].ReviewCount = reviewCount
 	}
 
 	return products, totalCount, nil
@@ -150,6 +178,13 @@ func GetProductsBySubCategorySlug(slug string, page, limit int) ([]models.Produc
 			return nil, 0, err
 		}
 		products[i].Images = &imageNames
+
+		rating, reviewCount, err := GetProductRatingAndReview(products[i].ID)
+		if err != nil {
+			return nil, 0, err
+		}
+		products[i].Rating = rating
+		products[i].ReviewCount = reviewCount
 	}
 
 	return products, totalCount, nil
