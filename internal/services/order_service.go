@@ -1,11 +1,19 @@
 package services
 
 import (
+	"bytes"
 	"errors"
+	"fmt"
+	"html/template"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/moonrill/rumahpc-api/config"
 	"github.com/moonrill/rumahpc-api/internal/models"
+	"github.com/moonrill/rumahpc-api/templates"
 	"github.com/moonrill/rumahpc-api/types"
 	"github.com/moonrill/rumahpc-api/utils"
 	"github.com/xendit/xendit-go/v6/invoice"
@@ -343,4 +351,88 @@ func CancelOrder(orderID string, userID string) error {
 	// TODO: Refund Payment
 
 	return config.DB.Save(order).Error
+}
+
+func GenerateInvoicePdf(orderID string, user *models.User) ([]byte, error) {
+	// Get order details
+	order, err := GetOrderById(user.ID, orderID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check if order is paid
+	if order.Status == models.OrderStatusWaiting {
+		return nil, utils.ErrBadRequest
+	}
+
+	var invoiceItems []types.InvoiceItem
+
+	for _, item := range order.OrderItems {
+		invoiceItems = append(invoiceItems, types.InvoiceItem{
+			Name:     item.Product.Name,
+			Weight:   float64(item.Product.Weight),
+			Quantity: item.Quantity,
+			Price:    utils.FormatToRupiah(item.Product.Price),
+			SubTotal: utils.FormatToRupiah(item.SubTotal),
+		})
+	}
+
+	// Prepare invoice data
+	invoice := types.Invoice{
+		InvoiceId:     "INV-" + order.ID,
+		Date:          order.CreatedAt.Format("02 January 2006"),
+		Merchant:      order.Merchant.Name,
+		User:          user.Name,
+		ContactName:   order.Address.ContactName,
+		ContactNumber: order.Address.ContactNumber,
+		Address:       ConvertAddressToString(order.Address),
+		TotalPrice:    utils.FormatToRupiah(order.TotalPrice),
+		PaymentMethod: order.Payment.PaymentMethod,
+		Courier:       strings.ToUpper(*order.CourierCompany),
+		InvoiceItems:  invoiceItems,
+	}
+
+	// Parse template
+	tmpl, err := template.New("invoice").Parse(templates.Invoice)
+	if err != nil {
+		return nil, fmt.Errorf("template parsing error: %w", err)
+	}
+
+	// Execute template
+	var buf bytes.Buffer
+	err = tmpl.Execute(&buf, invoice)
+	if err != nil {
+		return nil, fmt.Errorf("template execution error: %w", err)
+	}
+
+	// Create unique temporary files using UUID
+	uniqueID := uuid.New().String()
+	tempHTML := filepath.Join(os.TempDir(), fmt.Sprintf("invoice_%s_%s.html", orderID, uniqueID))
+	tempPDF := filepath.Join(os.TempDir(), fmt.Sprintf("invoice_%s_%s.pdf", orderID, uniqueID))
+
+	// Ensure cleanup of temporary files
+	defer func() {
+		os.Remove(tempHTML)
+		os.Remove(tempPDF)
+	}()
+
+	// Write HTML to temp file safely
+	err = os.WriteFile(tempHTML, buf.Bytes(), 0600)
+	if err != nil {
+		return nil, fmt.Errorf("error writing temp HTML file: %w", err)
+	}
+
+	// Convert to PDF using wkhtmltopdf
+	cmd := exec.Command("wkhtmltopdf", tempHTML, tempPDF)
+	if output, err := cmd.CombinedOutput(); err != nil {
+		return nil, fmt.Errorf("wkhtmltopdf error: %s: %w", string(output), err)
+	}
+
+	// Read generated PDF
+	pdfBytes, err := os.ReadFile(tempPDF)
+	if err != nil {
+		return nil, fmt.Errorf("error reading PDF file: %w", err)
+	}
+
+	return pdfBytes, nil
 }

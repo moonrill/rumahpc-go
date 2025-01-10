@@ -154,3 +154,27 @@ func CancelOrder(c *gin.Context) {
 
 	utils.SuccessResponse(c, http.StatusOK, "Success cancel order", nil)
 }
+
+func GenerateInvoice(c *gin.Context) {
+	orderID := c.Param("id")
+	user := c.MustGet("user").(models.User)
+
+	pdfBytes, err := services.GenerateInvoicePdf(orderID, &user)
+
+	if err != nil {
+		if err == utils.ErrNotFound {
+			utils.ErrorResponse(c, http.StatusNotFound, "Order not found")
+		} else if err == utils.ErrForbidden {
+			utils.ErrorResponse(c, http.StatusForbidden, "Forbidden")
+		} else if err == utils.ErrBadRequest {
+			utils.ErrorResponse(c, http.StatusBadRequest, "Invalid order status")
+		} else {
+			utils.ErrorResponse(c, http.StatusInternalServerError, "Error generate invoice")
+		}
+
+		return
+	}
+
+	c.Header("Content-Disposition", "attachment; filename="+orderID+".pdf")
+	c.Data(http.StatusOK, "application/pdf", pdfBytes)
+}

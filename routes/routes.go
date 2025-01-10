@@ -15,6 +15,7 @@ func SetupRoutes(router *gin.Engine) {
 	v1 := router.Group("/api/v1")
 	{
 		v1.GET("/image/*path", utils.ServeImage)
+		v1.GET("/computer/generate", controllers.GeneratePC)
 
 		auth := v1.Group("/auth")
 		{
@@ -112,6 +113,7 @@ func SetupRoutes(router *gin.Engine) {
 
 				customer.GET("/orders", controllers.GetOrders)
 				customer.GET("/orders/:id", controllers.GetOrderById)
+				customer.GET("/orders/:id/invoice", controllers.GenerateInvoice)
 				customer.POST("/orders/cart", controllers.CheckoutCart)
 				customer.POST("/orders/buy-now", controllers.BuyNowOrder)
 				customer.PATCH("/orders/:id/complete", controllers.CompleteOrder)

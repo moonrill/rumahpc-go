@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rumahpc-api
+  namespace: rumahpc-dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rumahpc-api
+  template:
+    metadata:
+      labels:
+        app: rumahpc-api
+    spec:
+      containers:
+        - name: rumahpc-api
+          image: moonrill/rumahpc-api:1.1
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - secretRef:
+                name: rumahpc-secret

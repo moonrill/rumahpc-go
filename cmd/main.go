@@ -32,6 +32,9 @@ func main() {
 	// Init Xendit
 	config.InitXendit()
 
+	// Init Groq
+	config.InitGroq()
+
 	// Get Port
 	port := os.Getenv("PORT")
 	if port == "" {

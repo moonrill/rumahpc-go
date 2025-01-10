@@ -167,3 +167,39 @@ type TrackingResponse struct {
 	History     []interface{}          `json:"history"`
 	Status      string                 `json:"status"`
 }
+
+type PC struct {
+	Processor   string `json:"processor"`
+	Motherboard string `json:"motherboard"`
+	Ram         string `json:"ram"`
+	VGA         string `json:"vga"`
+	Storage     string `json:"storage"`
+	Psu         string `json:"psu"`
+	Casing      string `json:"casing"`
+	Keyboard    string `json:"keyboard"`
+	Mouse       string `json:"mouse"`
+	Monitor     string `json:"monitor"`
+	PriceEst    int    `json:"price_est"`
+}
+
+type Invoice struct {
+	InvoiceId     string
+	Date          string
+	Merchant      string
+	User          string
+	ContactName   string
+	ContactNumber string
+	Address       string
+	TotalPrice    string
+	PaymentMethod string
+	Courier       string
+	InvoiceItems  []InvoiceItem
+}
+
+type InvoiceItem struct {
+	Name     string
+	Weight   float64
+	Quantity int
+	Price    string
+	SubTotal string
+}
