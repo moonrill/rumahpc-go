@@ -9,7 +9,7 @@ type SignUpRequest struct {
 	Name           string `json:"name" validate:"required,max=255"`
 	Email          string `json:"email" validate:"required,email,max=255"`
 	Password       string `json:"password" validate:"required,min=8,max=255"`
-	PhoneNumber    string `json:"phone_number" validate:"required,min=10,max=13"`
+	PhoneNumber    string `json:"phone_number" validate:"required,min=10,max=16"`
 	Role           string `json:"role" validate:"required,max=255"`
 	PaymentChannel string `json:"payment_channel,omitempty" validate:"omitempty,max=255"`
 	AccountNumber  string `json:"account_number,omitempty" validate:"omitempty,max=100"`
@@ -202,4 +202,13 @@ type InvoiceItem struct {
 	Quantity int
 	Price    string
 	SubTotal string
+}
+
+type OTPRequest struct {
+	UserID string `json:"user_id" validate:"required"`
+	OTP    string `json:"otp" validate:"required"`
+}
+
+type ResendOTPRequest struct {
+	UserID string `json:"user_id" validate:"required"`
 }

@@ -1,7 +1,9 @@
 package controllers
 
 import (
+	"context"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -10,7 +12,9 @@ import (
 	"github.com/moonrill/rumahpc-api/internal/services"
 	"github.com/moonrill/rumahpc-api/types"
 	"github.com/moonrill/rumahpc-api/utils"
+	"github.com/redis/go-redis/v9"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 func SignUp(c *gin.Context) {
@@ -97,7 +101,36 @@ func SignUp(c *gin.Context) {
 		return
 	}
 
-	utils.SuccessResponse(c, http.StatusCreated, "Success create user", user)
+	otp := utils.GenerateOTP(6)
+	otpKey := "otp_" + user.ID
+	lastRequestKey := "last_otp_request_" + user.ID
+	err = config.Rdb.Set(context.Background(), otpKey, otp, 5*time.Minute).Err()
+
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Error set otp", err.Error())
+		return
+	}
+
+	err = config.Rdb.Set(context.Background(), lastRequestKey, time.Now(), time.Minute).Err()
+
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Error set last request", err.Error())
+		return
+	}
+
+	err = utils.SendOTPEmail(user.Email, otp)
+
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Error send otp", err.Error())
+		return
+	}
+
+	response := map[string]interface{}{
+		"user":           user,
+		"otp_expired_at": time.Now().Add(5 * time.Minute).Format("2006-01-02T15:04:05Z07:00"),
+	}
+
+	utils.SuccessResponse(c, http.StatusCreated, "Success create user", response)
 }
 
 func SignIn(c *gin.Context) {
@@ -124,6 +157,11 @@ func SignIn(c *gin.Context) {
 		return
 	}
 
+	if !user.IsActive {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "User is not active")
+		return
+	}
+
 	token, err := services.GenerateToken(user)
 
 	if err != nil {
@@ -142,4 +180,101 @@ func GetProfile(c *gin.Context) {
 	user := c.MustGet("user").(models.User)
 
 	utils.SuccessResponse(c, http.StatusOK, "Success get profile", user)
+}
+
+func VerifyOTP(c *gin.Context) {
+	var request types.OTPRequest
+	if !utils.ValidateRequest(c, &request) {
+		return
+	}
+
+	otpKey := "otp_" + request.UserID
+	storedOtp, err := config.Rdb.Get(context.Background(), otpKey).Result()
+
+	if err == redis.Nil {
+		utils.ErrorResponse(c, http.StatusNotFound, "OTP Expired or Invalid")
+		return
+	} else if err != nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Error get otp", err.Error())
+		return
+	}
+
+	if storedOtp != request.OTP {
+		utils.ErrorResponse(c, http.StatusNotFound, "Invalid OTP")
+		return
+	}
+
+	err = services.ActivateUser(request.UserID)
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Error activate user", err.Error())
+		return
+	}
+
+	config.Rdb.Del(context.Background(), otpKey)
+
+	utils.SuccessResponse(c, http.StatusOK, "Success activate user", nil)
+}
+
+func ResendOTP(c *gin.Context) {
+	var request types.ResendOTPRequest
+	var user models.User
+
+	if !utils.ValidateRequest(c, &request) {
+		return
+	}
+
+	err := config.DB.First(&user, "id = ?", request.UserID).Error
+
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			utils.ErrorResponse(c, http.StatusNotFound, "User not found")
+		} else {
+			utils.ErrorResponse(c, http.StatusInternalServerError, "Error get user", err.Error())
+		}
+		return
+	}
+
+	if user.IsActive {
+		utils.ErrorResponse(c, http.StatusBadRequest, "User is already active")
+		return
+	}
+
+	// Check if the user has already requested an OTP in the last minute
+	lastRequestKey := "last_otp_request_" + user.ID
+	lastRequest, err := config.Rdb.Get(context.Background(), lastRequestKey).Result()
+
+	if lastRequest != "" {
+		utils.ErrorResponse(c, http.StatusBadRequest, "You have already requested an OTP in the last minute")
+		return
+	}
+
+	if err != redis.Nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Error get last request", err.Error())
+		return
+	}
+
+	err = config.Rdb.Set(context.Background(), lastRequestKey, time.Now(), time.Minute).Err()
+
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Error set last request", err.Error())
+		return
+	}
+
+	otp := utils.GenerateOTP(6)
+	otpKey := "otp_" + user.ID
+	err = config.Rdb.Set(context.Background(), otpKey, otp, 5*time.Minute).Err()
+
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Error set otp", err.Error())
+		return
+	}
+
+	err = utils.SendOTPEmail(user.Email, otp)
+
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Error send otp", err.Error())
+		return
+	}
+
+	utils.SuccessResponse(c, http.StatusOK, "Success resend otp", nil)
 }

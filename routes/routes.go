@@ -21,6 +21,8 @@ func SetupRoutes(router *gin.Engine) {
 		{
 			auth.POST("/register", controllers.SignUp)
 			auth.POST("/login", controllers.SignIn)
+			auth.POST("/otp", controllers.VerifyOTP)
+			auth.POST("/resend-otp", controllers.ResendOTP)
 		}
 
 		categories := v1.Group("/categories")

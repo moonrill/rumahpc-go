@@ -12,11 +12,12 @@ type User struct {
 	Email          string         `gorm:"uniqueIndex;type:varchar(255);not null" json:"email"`
 	Password       string         `gorm:"type:varchar(255);not null" json:"-"`
 	Avatar         *string        `gorm:"type:text" json:"avatar"`
-	PhoneNumber    string         `gorm:"type:varchar(13);not null" json:"phone_number"`
+	PhoneNumber    string         `gorm:"type:varchar(16);not null" json:"phone_number"`
 	Salt           string         `gorm:"type:uuid;not null" json:"-"`
 	PaymentChannel *string        `gorm:"type:varchar(255)" json:"payment_channel"`
 	AccountNumber  *string        `gorm:"type:varchar(100)" json:"account_number"`
 	AccountName    *string        `gorm:"type:varchar(100)" json:"account_name"`
+	IsActive       bool           `json:"is_active" gorm:"default:false" validate:"boolean"`
 	CreatedAt      time.Time      `json:"created_at"`
 	UpdatedAt      time.Time      `json:"updated_at"`
 	DeletedAt      gorm.DeletedAt `gorm:"index" json:"deleted_at"`

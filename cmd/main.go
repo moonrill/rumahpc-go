@@ -35,6 +35,9 @@ func main() {
 	// Init Groq
 	config.InitGroq()
 
+	// Init Redis
+	config.InitRedis()
+
 	// Get Port
 	port := os.Getenv("PORT")
 	if port == "" {

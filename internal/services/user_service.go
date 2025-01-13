@@ -23,3 +23,7 @@ func FindUserByEmail(email string) (*models.User, error) {
 
 	return &user, err
 }
+
+func ActivateUser(userID string) error {
+	return config.DB.Model(&models.User{}).Where("id = ?", userID).Update("is_active", true).Error
+}
