@@ -1,15 +1,64 @@
 package services
 
 import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"time"
+
 	"github.com/moonrill/rumahpc-api/config"
 	"github.com/moonrill/rumahpc-api/internal/models"
 	"github.com/moonrill/rumahpc-api/utils"
 	"gorm.io/gorm"
 )
 
+func ClearSubCategoriesCache() error {
+	// Get all keys matching the product cache pattern
+	pattern := "sub_categories:*"
+	ctx := context.Background()
+
+	// Use SCAN to iterate through all keys matching the pattern
+	iter := config.Rdb.Scan(ctx, 0, pattern, 0).Iterator()
+
+	// Create a pipeline for batch deletion
+	pipe := config.Rdb.Pipeline()
+
+	// Collect all matching keys and delete them
+	for iter.Next(ctx) {
+		key := iter.Val()
+		pipe.Del(ctx, key)
+	}
+
+	if err := iter.Err(); err != nil {
+		return fmt.Errorf("error scanning keys: %v", err)
+	}
+
+	// Execute pipeline
+	_, err := pipe.Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("error clearing cache: %v", err)
+	}
+
+	return nil
+}
+
 func GetSubCategories(page, limit int) ([]models.SubCategory, int64, error) {
 	var subCategories []models.SubCategory
 	var totalCount int64
+
+	cacheKey := fmt.Sprintf("sub_categories:page:%d:limit:%d", page, limit)
+
+	cachedData, err := config.Rdb.Get(context.Background(), cacheKey).Result()
+	if err == nil {
+		var cache struct {
+			SubCategories []models.SubCategory `json:"sub_categories"`
+			TotalCount    int64                `json:"totalCount"`
+		}
+
+		if err := json.Unmarshal([]byte(cachedData), &cache); err == nil {
+			return cache.SubCategories, cache.TotalCount, nil
+		}
+	}
 
 	offset := (page - 1) * limit
 
@@ -21,6 +70,18 @@ func GetSubCategories(page, limit int) ([]models.SubCategory, int64, error) {
 
 	if result.Error != nil {
 		return nil, 0, result.Error
+	}
+
+	cacheData, err := json.Marshal(struct {
+		SubCategories []models.SubCategory `json:"sub_categories"`
+		TotalCount    int64                `json:"totalCount"`
+	}{
+		SubCategories: subCategories,
+		TotalCount:    totalCount,
+	})
+
+	if err == nil {
+		config.Rdb.Set(context.Background(), cacheKey, string(cacheData), 10*time.Minute).Err()
 	}
 
 	return subCategories, totalCount, nil
@@ -55,7 +116,17 @@ func CreateSubCategory(subCategory *models.SubCategory) error {
 		return utils.ErrAlreadyExists
 	}
 
-	return config.DB.Create(subCategory).Error
+	err = config.DB.Create(subCategory).Error
+
+	if err != nil {
+		return err
+	}
+
+	if err := ClearSubCategoriesCache(); err != nil {
+		fmt.Printf("failed to invalidate cache: %v\n", err)
+	}
+
+	return nil
 }
 
 func UpdateSubCategory(id string, subCategory *models.SubCategory) error {
@@ -79,6 +150,10 @@ func UpdateSubCategory(id string, subCategory *models.SubCategory) error {
 
 	*subCategory = existingSubCategory
 
+	if err := ClearSubCategoriesCache(); err != nil {
+		fmt.Printf("failed to invalidate cache: %v\n", err)
+	}
+
 	return nil
 }
 
@@ -93,5 +168,15 @@ func DeleteSubCategory(id string) error {
 	// Set slug to null before delete
 	config.DB.Model(&models.SubCategory{}).Where("id = ?", id).Update("slug", nil)
 
-	return config.DB.Delete(&subCategory).Error
+	err = config.DB.Delete(&subCategory).Error
+
+	if err != nil {
+		return err
+	}
+
+	if err := ClearSubCategoriesCache(); err != nil {
+		fmt.Printf("failed to invalidate cache: %v\n", err)
+	}
+
+	return nil
 }

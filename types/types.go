@@ -212,3 +212,10 @@ type OTPRequest struct {
 type ResendOTPRequest struct {
 	UserID string `json:"user_id" validate:"required"`
 }
+
+type PaymentSuccessNotification struct {
+	Username      string
+	Total         int
+	PaymentMethod string
+	PaymentDate   string
+}

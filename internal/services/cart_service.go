@@ -1,6 +1,11 @@
 package services
 
 import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"time"
+
 	"github.com/moonrill/rumahpc-api/config"
 	"github.com/moonrill/rumahpc-api/internal/models"
 	"github.com/moonrill/rumahpc-api/types"
@@ -8,11 +13,37 @@ import (
 	"gorm.io/gorm"
 )
 
+func ClearCartCache(userID string) {
+	cartCacheKey := fmt.Sprintf("cart:%s", userID)
+	groupedCacheKey := fmt.Sprintf("cart:grouped:%s", userID)
+
+	pipe := config.Rdb.Pipeline()
+	pipe.Del(context.Background(), cartCacheKey)
+	pipe.Del(context.Background(), groupedCacheKey)
+	_, err := pipe.Exec(context.Background())
+	if err != nil {
+		fmt.Println("Error clearing cart cache:", err)
+	}
+}
+
 func GetGroupedCart(userID string) ([]types.GroupedCartItem, error) {
 	var cart models.Cart
+	// Ubah map menjadi slice untuk hasil
+	var result []types.GroupedCartItem
+
+	cacheKey := fmt.Sprintf("cart:grouped:%s", userID)
+
+	cachedData, err := config.Rdb.Get(context.Background(), cacheKey).Result()
+
+	if err == nil {
+		err := json.Unmarshal([]byte(cachedData), &result)
+		if err == nil {
+			return result, nil
+		}
+	}
 
 	// Preload CartItems, Product, and Merchant (User)
-	err := config.DB.
+	err = config.DB.
 		Where("user_id = ?", userID).
 		Preload("CartItems.Product.Merchant").
 		First(&cart).Error
@@ -44,10 +75,13 @@ func GetGroupedCart(userID string) ([]types.GroupedCartItem, error) {
 		}
 	}
 
-	// Ubah map menjadi slice untuk hasil
-	var result []types.GroupedCartItem
 	for _, group := range groupedItems {
 		result = append(result, *group)
+	}
+
+	resultData, err := json.Marshal(result)
+	if err == nil {
+		config.Rdb.Set(context.Background(), cacheKey, resultData, 5*time.Minute)
 	}
 
 	return result, nil
@@ -56,10 +90,26 @@ func GetGroupedCart(userID string) ([]types.GroupedCartItem, error) {
 func GetCart(userID string) ([]models.CartItem, error) {
 	var cart models.Cart
 
-	err := config.DB.Where("user_id = ?", userID).Preload("CartItems").Preload("CartItems.Product").First(&cart).Error
+	cacheKey := fmt.Sprintf("cart:%s", userID)
+
+	cachedData, err := config.Rdb.Get(context.Background(), cacheKey).Result()
+
+	if err == nil {
+		err := json.Unmarshal([]byte(cachedData), &cart.CartItems)
+		if err == nil {
+			return cart.CartItems, nil
+		}
+	}
+
+	err = config.DB.Where("user_id = ?", userID).Preload("CartItems").Preload("CartItems.Product").First(&cart).Error
 
 	if err != nil {
 		return nil, err
+	}
+
+	cartData, err := json.Marshal(cart.CartItems)
+	if err == nil {
+		config.Rdb.Set(context.Background(), cacheKey, cartData, 5*time.Minute)
 	}
 
 	return cart.CartItems, nil
@@ -122,6 +172,9 @@ func AddToCart(request *types.AddToCartRequest, userID string) (*models.CartItem
 		return nil, err
 	}
 
+	// Clear cache
+	ClearCartCache(userID)
+
 	return &cartItem, nil
 }
 
@@ -167,7 +220,16 @@ func UpdateCartItem(cartItemID string, quantity int, userID string) error {
 
 	// Update quantity
 	cartItem.Quantity = quantity
-	return config.DB.Save(&cartItem).Error
+
+	err = config.DB.Save(&cartItem).Error
+	if err != nil {
+		return err
+	}
+
+	// Clear cache
+	ClearCartCache(userID)
+
+	return nil
 }
 
 func RemoveFromCart(cartItemsID []string, userID string) error {
@@ -202,6 +264,9 @@ func RemoveFromCart(cartItemsID []string, userID string) error {
 			return err
 		}
 	}
+
+	// Clear cache
+	ClearCartCache(userID)
 
 	return nil
 }

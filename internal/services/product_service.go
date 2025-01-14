@@ -1,6 +1,11 @@
 package services
 
 import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"time"
+
 	"github.com/moonrill/rumahpc-api/config"
 	"github.com/moonrill/rumahpc-api/internal/models"
 	"github.com/moonrill/rumahpc-api/types"
@@ -8,9 +13,54 @@ import (
 	"gorm.io/gorm"
 )
 
+func ClearProductsCache() error {
+	// Get all keys matching the product cache pattern
+	pattern := "products:*"
+	ctx := context.Background()
+
+	// Use SCAN to iterate through all keys matching the pattern
+	iter := config.Rdb.Scan(ctx, 0, pattern, 0).Iterator()
+
+	// Create a pipeline for batch deletion
+	pipe := config.Rdb.Pipeline()
+
+	// Collect all matching keys and delete them
+	for iter.Next(ctx) {
+		key := iter.Val()
+		pipe.Del(ctx, key)
+	}
+
+	if err := iter.Err(); err != nil {
+		return fmt.Errorf("error scanning keys: %v", err)
+	}
+
+	// Execute pipeline
+	_, err := pipe.Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("error clearing cache: %v", err)
+	}
+
+	return nil
+}
+
 func GetProducts(page, limit int) ([]models.Product, int64, error) {
 	var products []models.Product
 	var totalCount int64
+
+	cacheKey := fmt.Sprintf("products:page:%d:limit:%d", page, limit)
+
+	// Check if data is cached
+	cachedData, err := config.Rdb.Get(context.Background(), cacheKey).Result()
+	if err == nil {
+		var cache struct {
+			Products   []models.Product `json:"products"`
+			TotalCount int64            `json:"totalCount"`
+		}
+
+		if err := json.Unmarshal([]byte(cachedData), &cache); err == nil {
+			return cache.Products, cache.TotalCount, nil
+		}
+	}
 
 	offset := (page - 1) * limit
 
@@ -38,6 +88,20 @@ func GetProducts(page, limit int) ([]models.Product, int64, error) {
 		products[i].ReviewCount = reviewCount
 	}
 
+	cacheData, err := json.Marshal(struct {
+		Products   []models.Product `json:"products"`
+		TotalCount int64            `json:"totalCount"`
+	}{
+		Products:   products,
+		TotalCount: totalCount,
+	})
+	if err == nil {
+		pipe := config.Rdb.Pipeline()
+
+		pipe.Set(context.Background(), cacheKey, cacheData, 10*time.Minute)
+		_, _ = pipe.Exec(context.Background())
+	}
+
 	return products, totalCount, nil
 }
 
@@ -59,6 +123,10 @@ func CreateProduct(product *types.CreateProductRequest, merchantID string) (*mod
 
 	if err := SaveImages(newProduct.ID, product.Images); err != nil {
 		return nil, err
+	}
+
+	if err := ClearProductsCache(); err != nil {
+		fmt.Printf("failed to invalidate cache: %v\n", err)
 	}
 
 	return &newProduct, nil
@@ -214,6 +282,10 @@ func UpdateProduct(id string, product *types.UpdateProductRequest, merchantID st
 		return nil, err
 	}
 
+	if err := ClearProductsCache(); err != nil {
+		fmt.Printf("failed to invalidate cache: %v\n", err)
+	}
+
 	return &updatedProduct, nil
 }
 
@@ -236,6 +308,10 @@ func ToggleProductStatus(id string, merchantID string) error {
 
 	if err := config.DB.Save(&product).Error; err != nil {
 		return err
+	}
+
+	if err := ClearProductsCache(); err != nil {
+		fmt.Printf("failed to invalidate cache: %v\n", err)
 	}
 
 	return nil

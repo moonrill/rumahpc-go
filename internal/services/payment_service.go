@@ -305,6 +305,9 @@ func HandleXenditCallback(callback *invoice.InvoiceCallback) error {
 				return err
 			}
 		}
+
+		// TODO: Send email
+		utils.SendPaymentSuccessNotification()
 	} else if payment.Status == models.PaymentExpired {
 		var orders []models.Order
 		err := config.DB.Preload("Merchant").Preload("User").Preload("Address").Where("payment_id = ?", payment.ID).Find(&orders).Error

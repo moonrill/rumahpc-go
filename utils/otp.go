@@ -7,7 +7,9 @@ import (
 	"net/smtp"
 	"os"
 	"strconv"
+	"time"
 
+	"github.com/moonrill/rumahpc-api/templates"
 	"github.com/twilio/twilio-go"
 	twilioApi "github.com/twilio/twilio-go/rest/api/v2010"
 )
@@ -27,8 +29,25 @@ func GenerateOTP(length int) string {
 func SendOTPEmail(email, otp string) error {
 	auth := smtp.PlainAuth("", os.Getenv("SMTP_EMAIL"), os.Getenv("SMTP_PASSWORD"), "smtp.gmail.com")
 	to := []string{email}
-	msg := []byte(fmt.Sprintf("Subject: Your OTP Code\r\n\r\nYour OTP is: %s", otp))
-	err := smtp.SendMail("smtp.gmail.com:587", auth, os.Getenv("SMTP_EMAIL"), to, msg)
+
+	headers := map[string]string{
+		"From":         os.Getenv("SMTP_EMAIL"),
+		"To":           email,
+		"Subject":      "OTP Verification",
+		"MIME-Version": "1.0",
+		"Content-Type": "text/html; charset=UTF-8",
+	}
+
+	var headerString string
+	for key, value := range headers {
+		headerString += fmt.Sprintf("%s: %s\r\n", key, value)
+	}
+
+	formattedHtml := fmt.Sprintf(templates.OTP, otp, time.Now().Year())
+
+	message := headerString + "\r\n\r\n" + formattedHtml
+
+	err := smtp.SendMail("smtp.gmail.com:587", auth, os.Getenv("SMTP_EMAIL"), to, []byte(message))
 	return err
 }
 
