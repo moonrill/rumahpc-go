@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/moonrill/rumahpc-api/config"
@@ -315,4 +316,156 @@ func ToggleProductStatus(id string, merchantID string) error {
 	}
 
 	return nil
+}
+
+func GetProductRecommendations(slug string, limit int) ([]models.Product, error) {
+	var product models.Product
+	var products []models.Product
+
+	// First find the source product
+	if err := config.DB.Where("slug = ?", slug).First(&product).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, utils.ErrNotFound
+		}
+		return nil, err
+	}
+
+	cacheKey := fmt.Sprintf("product:recommendations:%s", slug)
+	cachedData, err := config.Rdb.Get(context.Background(), cacheKey).Result()
+	if err == nil {
+		if err := json.Unmarshal([]byte(cachedData), &products); err == nil {
+			return products, nil
+		}
+	}
+
+	// Split the product name and description into keywords
+	nameKeywords := strings.Fields(strings.ToLower(product.Name))
+	descKeywords := strings.Fields(strings.ToLower(product.Description))
+
+	// Create a query builder for primary recommendations
+	query := config.DB.Model(&models.Product{}).
+		Where("status = ?", models.ProductStatusActive).
+		Where("id != ?", product.ID)
+
+	// Build dynamic OR conditions for name matching
+	var nameConditions []string
+	var args []interface{}
+
+	// Add exact category matching if your product model has categories
+	if product.CategoryID != "" {
+		query = query.Where("category_id = ?", product.CategoryID)
+	}
+	if product.SubCategoryID != nil {
+		query = query.Where("sub_category_id = ?", product.SubCategoryID)
+	}
+
+	// Add conditions for name keywords
+	for _, keyword := range nameKeywords {
+		if len(keyword) > 3 { // Only use keywords longer than 3 characters
+			nameConditions = append(nameConditions, "name ILIKE ?")
+			args = append(args, "%"+keyword+"%")
+		}
+	}
+
+	// Add conditions for description keywords
+	for _, keyword := range descKeywords {
+		if len(keyword) > 3 { // Only use keywords longer than 3 characters
+			nameConditions = append(nameConditions, "description ILIKE ?")
+			args = append(args, "%"+keyword+"%")
+		}
+	}
+
+	// Combine all conditions
+	if len(nameConditions) > 0 {
+		query = query.Where(strings.Join(nameConditions, " OR "), args...)
+	}
+
+	// Add relevance scoring
+	query = query.Select("products.*, "+
+		"CASE "+
+		"WHEN category_id = ? AND sub_category_id = ? THEN 4 "+
+		"WHEN category_id = ? THEN 3 "+
+		"WHEN sub_category_id = ? THEN 2 "+
+		"ELSE 1 END as relevance_score",
+		product.CategoryID, product.SubCategoryID,
+		product.CategoryID,
+		product.SubCategoryID)
+
+	// Get primary recommendations
+	err = query.Order("relevance_score DESC").
+		Limit(limit).
+		Find(&products).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	// If we don't have enough recommendations, get additional similar products
+	if len(products) < limit {
+		remainingLimit := limit - len(products)
+		var additionalProducts []models.Product
+
+		// Create a new query for additional products
+		fallbackQuery := config.DB.Model(&models.Product{}).
+			Where("status = ?", models.ProductStatusActive).
+			Where("id != ?", product.ID).
+			// Exclude already recommended products
+			Where("id NOT IN (?)", getProductIDs(products))
+
+		// Try to find products in the same category first
+		if product.CategoryID != "" {
+			fallbackQuery = fallbackQuery.Where("category_id = ?", product.CategoryID)
+		}
+
+		err = fallbackQuery.
+			Select("products.*, 1 as relevance_score").
+			Order("RANDOM()"). // Add some randomness to recommendations
+			Limit(remainingLimit).
+			Find(&additionalProducts).Error
+
+		if err != nil {
+			return nil, err
+		}
+
+		// If we still don't have enough, try without category restriction
+		if len(additionalProducts) < remainingLimit {
+			var finalProducts []models.Product
+			finalLimit := remainingLimit - len(additionalProducts)
+
+			err = config.DB.Model(&models.Product{}).
+				Where("status = ?", models.ProductStatusActive).
+				Where("id != ?", product.ID).
+				Where("id NOT IN (?)", getProductIDs(append(products, additionalProducts...))).
+				Select("products.*, 0 as relevance_score").
+				Order("RANDOM()").
+				Limit(finalLimit).
+				Find(&finalProducts).Error
+
+			if err != nil {
+				return nil, err
+			}
+
+			additionalProducts = append(additionalProducts, finalProducts...)
+		}
+
+		// Combine primary and additional recommendations
+		products = append(products, additionalProducts...)
+	}
+
+	// Cache the results
+	cacheData, err := json.Marshal(products)
+	if err == nil {
+		config.Rdb.Set(context.Background(), cacheKey, cacheData, 10*time.Minute).Err()
+	}
+
+	return products, nil
+}
+
+// Helper function to extract product IDs
+func getProductIDs(products []models.Product) []string {
+	ids := make([]string, len(products))
+	for i, p := range products {
+		ids[i] = p.ID
+	}
+	return ids
 }

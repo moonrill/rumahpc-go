@@ -13,6 +13,7 @@ type OrderItem struct {
 	Product   *Product       `json:"product" gorm:"foreignKey:ProductID"`
 	Quantity  int            `gorm:"type:integer;not null" json:"quantity"`
 	SubTotal  int            `gorm:"type:integer;not null" json:"sub_total"`
+	Review    *Review        `json:"review" gorm:"foreignKey:OrderItemID"`
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"deleted_at"`

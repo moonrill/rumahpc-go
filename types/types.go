@@ -219,3 +219,10 @@ type PaymentSuccessNotification struct {
 	PaymentMethod string
 	PaymentDate   string
 }
+
+type ReviewRequest struct {
+	OrderID   string `json:"order_id" validate:"required"`
+	ProductID string `json:"product_id" validate:"required"`
+	Rating    int    `json:"rating" validate:"required,gte=1,lte=5"`
+	Comment   string `json:"comment"`
+}

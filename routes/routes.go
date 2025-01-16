@@ -48,6 +48,7 @@ func SetupRoutes(router *gin.Engine) {
 			product.GET("/", controllers.GetProducts)
 			product.GET("/category/:slug", controllers.GetProductsByCategorySlug)
 			product.GET("/subcategory/:slug", controllers.GetProductsBySubCategorySlug)
+			product.GET("/recommendations/:slug", controllers.GetProductRecommendations)
 			product.GET("/:slug", controllers.GetProduct)
 		}
 
@@ -120,6 +121,9 @@ func SetupRoutes(router *gin.Engine) {
 				customer.POST("/orders/buy-now", controllers.BuyNowOrder)
 				customer.PATCH("/orders/:id/complete", controllers.CompleteOrder)
 				customer.PATCH("/orders/:id/cancel", controllers.CancelOrder)
+
+				customer.GET("/reviews", controllers.GetUserReviews)
+				customer.POST("/reviews", controllers.CreateReview)
 			}
 
 			customerMerchant := protected.Group("/")

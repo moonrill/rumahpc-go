@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/moonrill/rumahpc-api/internal/models"
@@ -195,4 +196,27 @@ func UploadMultipleProductImages(c *gin.Context) {
 	}
 
 	utils.SuccessResponse(c, http.StatusOK, "Success upload product image", files)
+}
+
+func GetProductRecommendations(c *gin.Context) {
+	slug := c.Param("slug")
+	limit, err := strconv.Atoi(c.Query("limit"))
+
+	if err != nil || limit < 1 {
+		limit = 10
+	}
+
+	products, err := services.GetProductRecommendations(slug, limit)
+
+	if err != nil {
+		if err == utils.ErrNotFound {
+			utils.ErrorResponse(c, http.StatusNotFound, "Product not found")
+		} else {
+			utils.ErrorResponse(c, http.StatusInternalServerError, "Error get product recommendations")
+		}
+
+		return
+	}
+
+	utils.SuccessResponse(c, http.StatusOK, "Success get product recommendations", products)
 }
