@@ -48,7 +48,7 @@ func GetUserReviews(c *gin.Context) {
 	reviews, totalItems, err := services.GetUserReviews(user.ID, sort, page, limit)
 
 	if err != nil {
-		utils.ErrorResponse(c, http.StatusInternalServerError, "Error get user reviews")
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Error get user reviews", err.Error())
 		return
 	}
 

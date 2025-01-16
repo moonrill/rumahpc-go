@@ -1,6 +1,11 @@
 package services
 
 import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"time"
+
 	"github.com/moonrill/rumahpc-api/config"
 	"github.com/moonrill/rumahpc-api/internal/models"
 	"github.com/moonrill/rumahpc-api/types"
@@ -73,6 +78,20 @@ func GetUserReviews(userId, sort string, page, limit int) ([]*models.Review, int
 	var reviews []*models.Review
 	var totalCount int64
 
+	var cache struct {
+		Reviews    []*models.Review `json:"reviews"`
+		TotalCount int64            `json:"totalCount"`
+	}
+	cacheKey := fmt.Sprintf("reviews:user:%s:page:%d:limit:%d:sort:%s", userId, page, limit, sort)
+
+	// Check if data is cached
+	cachedData, err := config.Rdb.Get(context.Background(), cacheKey).Result()
+	if err == nil {
+		if err := json.Unmarshal([]byte(cachedData), &cache); err == nil {
+			return cache.Reviews, cache.TotalCount, nil
+		}
+	}
+
 	offset := (page - 1) * limit
 
 	if err := config.DB.Model(&models.Review{}).Where("user_id = ?", userId).Count(&totalCount).Error; err != nil {
@@ -90,6 +109,18 @@ func GetUserReviews(userId, sort string, page, limit int) ([]*models.Review, int
 		}
 
 		reviews[i].OrderItem.Product.Images = &productImageNames
+	}
+
+	cache.Reviews = reviews
+	cache.TotalCount = totalCount
+
+	cacheData, err := json.Marshal(cache)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	if err := config.Rdb.Set(context.Background(), cacheKey, cacheData, 3*time.Minute).Err(); err != nil {
+		return nil, 0, err
 	}
 
 	return reviews, totalCount, nil
