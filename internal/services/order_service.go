@@ -343,6 +343,7 @@ func CancelOrder(orderID string, userID string) error {
 	}
 
 	order.Status = models.OrderStatusCancelled
+	order.ShippingStatus = "cancelled"
 
 	if err := CancelShipping(*order.ShippingID); err != nil {
 		return err

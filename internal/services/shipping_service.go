@@ -5,12 +5,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"html/template"
 	"io"
+	"log"
 	"net/http"
+	"net/smtp"
 	"os"
 
 	"github.com/moonrill/rumahpc-api/config"
 	"github.com/moonrill/rumahpc-api/internal/models"
+	"github.com/moonrill/rumahpc-api/templates"
 	"github.com/moonrill/rumahpc-api/types"
 	"github.com/moonrill/rumahpc-api/utils"
 	"gorm.io/gorm"
@@ -258,7 +262,7 @@ func ConvertAddressToString(address *models.Address) string {
 func HandleBiteshipCallback(request *types.BiteshipStatusCallback) error {
 	var order models.Order
 
-	err := config.DB.First(&order, "shipping_id = ?", request.OrderID).Error
+	err := config.DB.Preload("OrderItems.Product").Preload("Address").Preload("User").First(&order, "shipping_id = ?", request.OrderID).Error
 
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -286,6 +290,11 @@ func HandleBiteshipCallback(request *types.BiteshipStatusCallback) error {
 	case "delivered":
 		order.ShippingStatus = "delivered"
 		order.Status = models.OrderStatusDelivered
+
+		err := SendDeliveredNotification(&order)
+		if err != nil {
+			return err
+		}
 	case "rejected":
 		order.ShippingStatus = "rejected"
 	case "courier_not_found":
@@ -393,4 +402,40 @@ func CancelShipping(id string) error {
 	}
 
 	return nil
+}
+
+func SendDeliveredNotification(order *models.Order) error {
+	auth := smtp.PlainAuth("", os.Getenv("SMTP_EMAIL"), os.Getenv("SMTP_PASSWORD"), "smtp.gmail.com")
+
+	headers := map[string]string{
+		"From":         os.Getenv("SMTP_EMAIL"),
+		"To":           "arilramadani245@gmail.com",
+		"Subject":      "Order Delivered",
+		"MIME-Version": "1.0",
+		"Content-Type": "text/html; charset=UTF-8",
+	}
+
+	var headerString string
+	for key, value := range headers {
+		headerString += fmt.Sprintf("%s: %s\r\n", key, value)
+	}
+
+	tmpl := template.New("delivered").Funcs(templates.TemplateFuncs)
+
+	tmpl, err := tmpl.Parse(templates.Delivered)
+	if err != nil {
+		log.Println(err)
+		return fmt.Errorf("template parsing error: %w", err)
+	}
+
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, order); err != nil {
+		log.Println(err)
+		return fmt.Errorf("template execution error: %w", err)
+	}
+
+	message := headerString + "\r\n\r\n" + buf.String()
+
+	err = smtp.SendMail("smtp.gmail.com:587", auth, os.Getenv("SMTP_EMAIL"), []string{"arilramadani245@gmail.com"}, []byte(message))
+	return err
 }
